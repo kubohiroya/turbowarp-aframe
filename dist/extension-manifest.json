@@ -17,11 +17,177 @@
       ]
     },
     {
+      "opcode": "addEulerRotationKeyframe",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "TIME",
+          "type": "NUMBER"
+        },
+        {
+          "id": "UNIT",
+          "type": "STRING"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "addEulerRotationKeyframeTrack",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "PATH",
+          "type": "STRING"
+        },
+        {
+          "id": "TIMES",
+          "type": "STRING"
+        },
+        {
+          "id": "UNIT",
+          "type": "STRING"
+        },
+        {
+          "id": "VALUES",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "addPositionKeyframe",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "TIME",
+          "type": "NUMBER"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "addQuaternionKeyframeTrack",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "PATH",
+          "type": "STRING"
+        },
+        {
+          "id": "TIMES",
+          "type": "STRING"
+        },
+        {
+          "id": "VALUES",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "addScaleKeyframe",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "TIME",
+          "type": "NUMBER"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "addVectorKeyframeTrack",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "PATH",
+          "type": "STRING"
+        },
+        {
+          "id": "TIMES",
+          "type": "STRING"
+        },
+        {
+          "id": "VALUES",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
       "opcode": "countSelector",
       "blockType": "REPORTER",
       "arguments": [
         {
           "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "createAnimationClip",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "DURATION",
+          "type": "NUMBER"
+        },
+        {
+          "id": "NAME",
           "type": "STRING"
         }
       ]
@@ -77,6 +243,16 @@
       ]
     },
     {
+      "opcode": "deleteAnimationClip",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "NAME",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
       "opcode": "deleteSelector",
       "blockType": "COMMAND",
       "arguments": [
@@ -108,6 +284,20 @@
       "opcode": "eventTargetId",
       "blockType": "REPORTER",
       "arguments": []
+    },
+    {
+      "opcode": "isAnimationClipPlaying",
+      "blockType": "BOOLEAN",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "opcode": "loadTemplate",
@@ -142,6 +332,70 @@
         {
           "id": "Z",
           "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "pauseAnimationClip",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "playAnimationClip",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "LOOP",
+          "type": "BOOLEAN"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "resumeAnimationClip",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "setAnimationTimeScale",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "SCALE",
+          "type": "NUMBER"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
         }
       ]
     },
@@ -222,6 +476,20 @@
         {
           "id": "Z",
           "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "stopAnimationClip",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLIP",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
         }
       ]
     },

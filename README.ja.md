@@ -14,6 +14,7 @@ Scratch のスプライトや背景を 3D オブジェクトとして扱うの�
 - local `position`、`rotation`、class、`data-*`、visible、A-Frame component 属性を操作します。
 - JSON template を読み込み、instance id を明示して部分シーングラフを生成します。
 - A-Frame host を検出した TurboWarp stage 近傍へ mount し、scene ready、DOM pointer/click、selector 単位の custom event をハットブロックで扱います。
+- Three.js keyframe animation clip を定義し、vector / quaternion track を再生します。
 - 当たり判定と AR 連携は Issue #1 に基づく次段階の API 境界として文書化しています。
 
 ## 要件と安全性
@@ -66,6 +67,20 @@ pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.1.0
 - `emit 3D event [TYPE] from selector [SELECTOR] with data [DATA]`
 - `when 3D scene ready`
 - `when event [TYPE] on selector [SELECTOR]`
+- `create 3D animation clip [NAME] duration [DURATION]`
+- `delete 3D animation clip [NAME]`
+- `add vector keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]`
+- `add quaternion keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]`
+- `add euler rotation keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES] unit [UNIT]`
+- `add position keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]`
+- `add scale keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]`
+- `add euler rotation keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z] unit [UNIT]`
+- `play 3D animation clip [CLIP] on selector [SELECTOR] loop [LOOP]`
+- `stop 3D animation clip [CLIP] on selector [SELECTOR]`
+- `pause 3D animation clip [CLIP] on selector [SELECTOR]`
+- `resume 3D animation clip [CLIP] on selector [SELECTOR]`
+- `set 3D animation clip [CLIP] on selector [SELECTOR] time scale [SCALE]`
+- `is 3D animation clip [CLIP] playing on selector [SELECTOR]?`
 
 ## シーンモデル
 
@@ -80,6 +95,14 @@ pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.1.0
 - event ハット実行後の `@event` または `event target`
 
 複数一致する selector に対して command ブロックは全件に適用します。template の parent や event emit の target のように 1 ノードが必要な場合は、グラフ挿入順の first match を使います。
+
+## キーフレームアニメーション
+
+animation ブロックは clip 定義を保存し、A-Frame と Three.js が利用可能な場合に `AFRAME.THREE.AnimationMixer` で一致 node の root `object3D` へ再生します。`VectorKeyframeTrack` は `.position` と `.scale`、`QuaternionKeyframeTrack` は `.quaternion` を対象にします。glTF 内部の bone、child object、material property は初期スコープ外です。
+
+CSV 形式の track ブロックは Three.js に近い低レベル API です。教材や通常のブロック制作では、`add position keyframe...`、`add scale keyframe...`、`add euler rotation keyframe...` のように 1 keyframe ずつ追加するブロックを使います。同じ clip、同じ path、同じ time の keyframe は後から追加した値で置き換えます。
+
+既存の `set selector [SELECTOR] rotation x [X] y [Y] z [Z]` は A-Frame の degree-based rotation attribute を設定します。Quaternion track は Three.js の object state を扱うため、Euler 補助ブロックでは `degrees` または `radians` を明示し、再生前に quaternion values へ変換します。
 
 ## アーキテクチャ
 

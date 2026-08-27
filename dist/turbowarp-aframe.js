@@ -14,7 +14,7 @@
     blockIconURI: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iNiIgeT0iOCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzEyMTgyNiIvPjxwYXRoIGQ9Ik0xNCAzMmw5LTE4IDkgMThoLTRsLTItNWgtNmwtMiA1aC00Wm03LjQtOGgzLjJsLTEuNi00LjEtMS42IDQuMVoiIGZpbGw9IiM0Q0ZGQjAiLz48Y2lyY2xlIGN4PSIzNiIgY3k9IjE0IiByPSI0IiBmaWxsPSIjRkZBQjE5Ii8+PC9zdmc+"
   };
   const extensionName = "TurboWarp-A-Frame";
-  const blocks = [{ "opcode": "createScene", "blockType": "COMMAND", "text": "create 3D scene with layer [LAYER] mode [MODE]", "description": "Initializes the A-Frame scene host and emits the scene ready event.", "arguments": { "LAYER": { "type": "STRING", "defaultValue": "above-stage" }, "MODE": { "type": "STRING", "defaultValue": "3d" } } }, { "opcode": "loadTemplate", "blockType": "COMMAND", "text": "load template [ID] from JSON [SOURCE]", "description": "Stores a declarative scene graph template for later instantiation.", "arguments": { "ID": { "type": "STRING", "defaultValue": "monster" }, "SOURCE": { "type": "STRING", "defaultValue": '{"type":"box","id":"body","attributes":{"color":"#4cffb0"}}' } } }, { "opcode": "createNode", "blockType": "COMMAND", "text": "create [TYPE] node id [ID] under [PARENT]", "description": "Creates a primitive, model, text, light, camera, or group node.", "arguments": { "TYPE": { "type": "STRING", "defaultValue": "box" }, "ID": { "type": "STRING", "defaultValue": "card" }, "PARENT": { "type": "STRING", "defaultValue": "#scene" } } }, { "opcode": "createFromTemplate", "blockType": "COMMAND", "text": "create template [TEMPLATE] as [INSTANCE] under [PARENT]", "description": "Instantiates a stored template under the first node matching the parent selector.", "arguments": { "TEMPLATE": { "type": "STRING", "defaultValue": "monster" }, "INSTANCE": { "type": "STRING", "defaultValue": "monster-1" }, "PARENT": { "type": "STRING", "defaultValue": "#scene" } } }, { "opcode": "setPosition", "blockType": "COMMAND", "text": "set selector [SELECTOR] position x [X] y [Y] z [Z]", "description": "Sets local position on every node matching the selector.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" }, "X": { "type": "NUMBER", "defaultValue": 0 }, "Y": { "type": "NUMBER", "defaultValue": 1 }, "Z": { "type": "NUMBER", "defaultValue": -3 } } }, { "opcode": "moveBy", "blockType": "COMMAND", "text": "move selector [SELECTOR] by x [X] y [Y] z [Z]", "description": "Offsets local position on every node matching the selector.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" }, "X": { "type": "NUMBER", "defaultValue": 0 }, "Y": { "type": "NUMBER", "defaultValue": 0 }, "Z": { "type": "NUMBER", "defaultValue": 1 } } }, { "opcode": "setRotation", "blockType": "COMMAND", "text": "set selector [SELECTOR] rotation x [X] y [Y] z [Z]", "description": "Sets local Euler rotation in degrees on every node matching the selector.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" }, "X": { "type": "NUMBER", "defaultValue": 0 }, "Y": { "type": "NUMBER", "defaultValue": 45 }, "Z": { "type": "NUMBER", "defaultValue": 0 } } }, { "opcode": "addClass", "blockType": "COMMAND", "text": "add class [CLASS] to selector [SELECTOR]", "description": "Adds a CSS-style class to every node matching the selector.", "arguments": { "CLASS": { "type": "STRING", "defaultValue": "monster" }, "SELECTOR": { "type": "STRING", "defaultValue": "#card" } } }, { "opcode": "setData", "blockType": "COMMAND", "text": "set selector [SELECTOR] data [KEY] to [VALUE]", "description": "Sets a data-* value on every node matching the selector.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" }, "KEY": { "type": "STRING", "defaultValue": "zone" }, "VALUE": { "type": "STRING", "defaultValue": "field" } } }, { "opcode": "setAttribute", "blockType": "COMMAND", "text": "set selector [SELECTOR] attribute [NAME] to [VALUE]", "description": "Sets an A-Frame component or HTML attribute on every node matching the selector.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" }, "NAME": { "type": "STRING", "defaultValue": "visible" }, "VALUE": { "type": "STRING", "defaultValue": "true" } } }, { "opcode": "deleteSelector", "blockType": "COMMAND", "text": "delete selector [SELECTOR]", "description": "Deletes every non-root node matching the selector and its descendants.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": "#card" } } }, { "opcode": "countSelector", "blockType": "REPORTER", "text": "count selector [SELECTOR]", "description": "Returns the number of nodes matching a limited selector.", "arguments": { "SELECTOR": { "type": "STRING", "defaultValue": ".monster" } } }, { "opcode": "eventTargetId", "blockType": "REPORTER", "text": "event target id", "description": "Returns the id of the most recently handled 3D event target.", "arguments": {} }, { "opcode": "emitEvent", "blockType": "COMMAND", "text": "emit 3D event [TYPE] from selector [SELECTOR] with data [DATA]", "description": "Queues and dispatches a 3D event from the first node matching the selector.", "arguments": { "TYPE": { "type": "STRING", "defaultValue": "attack" }, "SELECTOR": { "type": "STRING", "defaultValue": "#card" }, "DATA": { "type": "STRING", "defaultValue": "{}" } } }, { "opcode": "whenSceneReady", "blockType": "HAT", "text": "when 3D scene ready", "description": "Fires once after create 3D scene initializes the scene host.", "arguments": {} }, { "opcode": "whenEventOnSelector", "blockType": "HAT", "text": "when event [TYPE] on selector [SELECTOR]", "description": "Fires when a queued 3D event of the given type targets a node matching the selector.", "arguments": { "TYPE": { "type": "STRING", "defaultValue": "attack" }, "SELECTOR": { "type": "STRING", "defaultValue": ".monster" } } }];
+  const blocks = /* @__PURE__ */ JSON.parse('[{"opcode":"createScene","blockType":"COMMAND","text":"create 3D scene with layer [LAYER] mode [MODE]","description":"Initializes the A-Frame scene host and emits the scene ready event.","arguments":{"LAYER":{"type":"STRING","defaultValue":"above-stage"},"MODE":{"type":"STRING","defaultValue":"3d"}}},{"opcode":"loadTemplate","blockType":"COMMAND","text":"load template [ID] from JSON [SOURCE]","description":"Stores a declarative scene graph template for later instantiation.","arguments":{"ID":{"type":"STRING","defaultValue":"monster"},"SOURCE":{"type":"STRING","defaultValue":"{\\"type\\":\\"box\\",\\"id\\":\\"body\\",\\"attributes\\":{\\"color\\":\\"#4cffb0\\"}}"}}},{"opcode":"createNode","blockType":"COMMAND","text":"create [TYPE] node id [ID] under [PARENT]","description":"Creates a primitive, model, text, light, camera, or group node.","arguments":{"TYPE":{"type":"STRING","defaultValue":"box"},"ID":{"type":"STRING","defaultValue":"card"},"PARENT":{"type":"STRING","defaultValue":"#scene"}}},{"opcode":"createFromTemplate","blockType":"COMMAND","text":"create template [TEMPLATE] as [INSTANCE] under [PARENT]","description":"Instantiates a stored template under the first node matching the parent selector.","arguments":{"TEMPLATE":{"type":"STRING","defaultValue":"monster"},"INSTANCE":{"type":"STRING","defaultValue":"monster-1"},"PARENT":{"type":"STRING","defaultValue":"#scene"}}},{"opcode":"setPosition","blockType":"COMMAND","text":"set selector [SELECTOR] position x [X] y [Y] z [Z]","description":"Sets local position on every node matching the selector.","arguments":{"SELECTOR":{"type":"STRING","defaultValue":"#card"},"X":{"type":"NUMBER","defaultValue":0},"Y":{"type":"NUMBER","defaultValue":1},"Z":{"type":"NUMBER","defaultValue":-3}}},{"opcode":"moveBy","blockType":"COMMAND","text":"move selector [SELECTOR] by x [X] y [Y] z [Z]","description":"Offsets local position on every node matching the selector.","arguments":{"SELECTOR":{"type":"STRING","defaultValue":"#card"},"X":{"type":"NUMBER","defaultValue":0},"Y":{"type":"NUMBER","defaultValue":0},"Z":{"type":"NUMBER","defaultValue":1}}},{"opcode":"setRotation","blockType":"COMMAND","text":"set selector [SELECTOR] rotation x [X] y [Y] z [Z]","description":"Sets local Euler rotation in degrees on every node matching the selector.","arguments":{"SELECTOR":{"type":"STRING","defaultValue":"#card"},"X":{"type":"NUMBER","defaultValue":0},"Y":{"type":"NUMBER","defaultValue":45},"Z":{"type":"NUMBER","defaultValue":0}}},{"opcode":"addClass","blockType":"COMMAND","text":"add class [CLASS] to selector [SELECTOR]","description":"Adds a CSS-style class to every node matching the selector.","arguments":{"CLASS":{"type":"STRING","defaultValue":"monster"},"SELECTOR":{"type":"STRING","defaultValue":"#card"}}},{"opcode":"setData","blockType":"COMMAND","text":"set selector [SELECTOR] data [KEY] to [VALUE]","description":"Sets a data-* value on every node matching the selector.","arguments":{"SELECTOR":{"type":"STRING","defaultValue":"#card"},"KEY":{"type":"STRING","defaultValue":"zone"},"VALUE":{"type":"STRING","defaultValue":"field"}}},{"opcode":"setAttribute","blockType":"COMMAND","text":"set selector [SELECTOR] attribute [NAME] to [VALUE]","description":"Sets an A-Frame component or HTML attribute on every node matching the selector.","arguments":{"SELECTOR":{"type":"STRING","defaultValue":"#card"},"NAME":{"type":"STRING","defaultValue":"visible"},"VALUE":{"type":"STRING","defaultValue":"true"}}},{"opcode":"deleteSelector","blockType":"COMMAND","text":"delete selector [SELECTOR]","description":"Deletes every non-root node matching the selector and its descendants.","arguments":{"SELECTOR":{"type":"STRING","defaultValue":"#card"}}},{"opcode":"countSelector","blockType":"REPORTER","text":"count selector [SELECTOR]","description":"Returns the number of nodes matching a limited selector.","arguments":{"SELECTOR":{"type":"STRING","defaultValue":".monster"}}},{"opcode":"eventTargetId","blockType":"REPORTER","text":"event target id","description":"Returns the id of the most recently handled 3D event target.","arguments":{}},{"opcode":"emitEvent","blockType":"COMMAND","text":"emit 3D event [TYPE] from selector [SELECTOR] with data [DATA]","description":"Queues and dispatches a 3D event from the first node matching the selector.","arguments":{"TYPE":{"type":"STRING","defaultValue":"attack"},"SELECTOR":{"type":"STRING","defaultValue":"#card"},"DATA":{"type":"STRING","defaultValue":"{}"}}},{"opcode":"whenSceneReady","blockType":"HAT","text":"when 3D scene ready","description":"Fires once after create 3D scene initializes the scene host.","arguments":{}},{"opcode":"whenEventOnSelector","blockType":"HAT","text":"when event [TYPE] on selector [SELECTOR]","description":"Fires when a queued 3D event of the given type targets a node matching the selector.","arguments":{"TYPE":{"type":"STRING","defaultValue":"attack"},"SELECTOR":{"type":"STRING","defaultValue":".monster"}}},{"opcode":"createAnimationClip","blockType":"COMMAND","text":"create 3D animation clip [NAME] duration [DURATION]","description":"Creates or replaces a Three.js AnimationClip definition.","arguments":{"NAME":{"type":"STRING","defaultValue":"wave"},"DURATION":{"type":"NUMBER","defaultValue":-1}}},{"opcode":"deleteAnimationClip","blockType":"COMMAND","text":"delete 3D animation clip [NAME]","description":"Deletes a stored 3D animation clip definition and stops its active actions.","arguments":{"NAME":{"type":"STRING","defaultValue":"wave"}}},{"opcode":"addVectorKeyframeTrack","blockType":"COMMAND","text":"add vector keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]","description":"Adds a Three.js VectorKeyframeTrack definition with x y z values.","arguments":{"CLIP":{"type":"STRING","defaultValue":"move-up"},"PATH":{"type":"STRING","defaultValue":".position"},"TIMES":{"type":"STRING","defaultValue":"0,0.5,1"},"VALUES":{"type":"STRING","defaultValue":"0,1,-3, 0,1.5,-3, 0,1,-3"}}},{"opcode":"addQuaternionKeyframeTrack","blockType":"COMMAND","text":"add quaternion keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]","description":"Adds a Three.js QuaternionKeyframeTrack definition with x y z w values.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"PATH":{"type":"STRING","defaultValue":".quaternion"},"TIMES":{"type":"STRING","defaultValue":"0,0.5,1"},"VALUES":{"type":"STRING","defaultValue":"0,0,0,1, 0,0,0.389,0.921, 0,0,0,1"}}},{"opcode":"addEulerRotationKeyframeTrack","blockType":"COMMAND","text":"add euler rotation keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES] unit [UNIT]","description":"Adds a quaternion track converted from Euler x y z rotation values.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"PATH":{"type":"STRING","defaultValue":".quaternion"},"TIMES":{"type":"STRING","defaultValue":"0,0.25,0.5,0.75,1"},"VALUES":{"type":"STRING","defaultValue":"0,0,0, 0,0,0.8, 0,0,0, 0,0,-0.8, 0,0,0"},"UNIT":{"type":"STRING","defaultValue":"radians"}}},{"opcode":"addPositionKeyframe","blockType":"COMMAND","text":"add position keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]","description":"Adds or replaces one position keyframe on the clip.","arguments":{"CLIP":{"type":"STRING","defaultValue":"move-up"},"TIME":{"type":"NUMBER","defaultValue":0},"X":{"type":"NUMBER","defaultValue":0},"Y":{"type":"NUMBER","defaultValue":1},"Z":{"type":"NUMBER","defaultValue":-3}}},{"opcode":"addScaleKeyframe","blockType":"COMMAND","text":"add scale keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]","description":"Adds or replaces one scale keyframe on the clip.","arguments":{"CLIP":{"type":"STRING","defaultValue":"pulse"},"TIME":{"type":"NUMBER","defaultValue":0},"X":{"type":"NUMBER","defaultValue":1},"Y":{"type":"NUMBER","defaultValue":1},"Z":{"type":"NUMBER","defaultValue":1}}},{"opcode":"addEulerRotationKeyframe","blockType":"COMMAND","text":"add euler rotation keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z] unit [UNIT]","description":"Adds or replaces one Euler rotation keyframe converted to quaternion values.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"TIME":{"type":"NUMBER","defaultValue":0},"X":{"type":"NUMBER","defaultValue":0},"Y":{"type":"NUMBER","defaultValue":0},"Z":{"type":"NUMBER","defaultValue":0.8},"UNIT":{"type":"STRING","defaultValue":"radians"}}},{"opcode":"playAnimationClip","blockType":"COMMAND","text":"play 3D animation clip [CLIP] on selector [SELECTOR] loop [LOOP]","description":"Plays a stored 3D animation clip on every matching node.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"SELECTOR":{"type":"STRING","defaultValue":"#leftArm"},"LOOP":{"type":"BOOLEAN","defaultValue":true}}},{"opcode":"stopAnimationClip","blockType":"COMMAND","text":"stop 3D animation clip [CLIP] on selector [SELECTOR]","description":"Stops a stored 3D animation clip on every matching node.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"SELECTOR":{"type":"STRING","defaultValue":"#leftArm"}}},{"opcode":"pauseAnimationClip","blockType":"COMMAND","text":"pause 3D animation clip [CLIP] on selector [SELECTOR]","description":"Pauses a stored 3D animation clip on every matching node.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"SELECTOR":{"type":"STRING","defaultValue":"#leftArm"}}},{"opcode":"resumeAnimationClip","blockType":"COMMAND","text":"resume 3D animation clip [CLIP] on selector [SELECTOR]","description":"Resumes a paused 3D animation clip on every matching node.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"SELECTOR":{"type":"STRING","defaultValue":"#leftArm"}}},{"opcode":"setAnimationTimeScale","blockType":"COMMAND","text":"set 3D animation clip [CLIP] on selector [SELECTOR] time scale [SCALE]","description":"Sets the playback speed for a stored 3D animation clip on every matching node.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"SELECTOR":{"type":"STRING","defaultValue":"#leftArm"},"SCALE":{"type":"NUMBER","defaultValue":1}}},{"opcode":"isAnimationClipPlaying","blockType":"BOOLEAN","text":"is 3D animation clip [CLIP] playing on selector [SELECTOR]?","description":"Reports whether any matching node has the stored 3D animation clip playing.","arguments":{"CLIP":{"type":"STRING","defaultValue":"wave"},"SELECTOR":{"type":"STRING","defaultValue":"#leftArm"}}}]');
   const definitions = {
     extensionName,
     blocks
@@ -35,8 +35,11 @@
     constructor() {
       this.nodes = /* @__PURE__ */ new Map();
       this.templates = /* @__PURE__ */ new Map();
+      this.animationClips = /* @__PURE__ */ new Map();
+      this.animationPlaybacks = /* @__PURE__ */ new Map();
       this.eventQueue = [];
       this.domEventTypes = new Set(DOM_EVENT_TYPES);
+      this.runtimeId = `twaframe-${Math.random().toString(36).slice(2)}`;
       this.sceneOptions = { layer: "above-stage", mode: "3d" };
       this.rootElement = null;
       this.sceneReadyPending = false;
@@ -184,9 +187,165 @@
       this.lastEvent = event ?? null;
       return event !== void 0;
     }
+    createAnimationClip(args) {
+      const name = this.normalizeId(Scratch.Cast.toString(args.NAME));
+      const duration = Scratch.Cast.toNumber(args.DURATION);
+      if (!Number.isFinite(duration) || duration < -1) {
+        throw new TypeError("Animation clip duration must be -1 or a non-negative number.");
+      }
+      this.stopClipEverywhere(name);
+      this.animationClips.set(name, {
+        name,
+        duration,
+        tracks: []
+      });
+    }
+    deleteAnimationClip(args) {
+      const name = this.normalizeId(Scratch.Cast.toString(args.NAME));
+      this.stopClipEverywhere(name);
+      this.animationClips.delete(name);
+    }
+    addVectorKeyframeTrack(args) {
+      this.addKeyframeTrack(args, "vector");
+    }
+    addQuaternionKeyframeTrack(args) {
+      this.addKeyframeTrack(args, "quaternion");
+    }
+    addEulerRotationKeyframeTrack(args) {
+      const times = this.parseNumberList(Scratch.Cast.toString(args.TIMES), "times");
+      const eulerValues = this.parseNumberList(Scratch.Cast.toString(args.VALUES), "values");
+      this.validateTrackNumbers(times, eulerValues, 3);
+      const unit = this.normalizeEulerUnit(Scratch.Cast.toString(args.UNIT));
+      const values = [];
+      for (let index = 0; index < eulerValues.length; index += 3) {
+        values.push(
+          ...this.eulerToQuaternion(
+            eulerValues[index] ?? 0,
+            eulerValues[index + 1] ?? 0,
+            eulerValues[index + 2] ?? 0,
+            unit
+          )
+        );
+      }
+      this.pushKeyframeTrack({
+        clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+        path: Scratch.Cast.toString(args.PATH),
+        trackType: "quaternion",
+        times,
+        values
+      });
+    }
+    addPositionKeyframe(args) {
+      this.insertVectorKeyframe(args, ".position");
+    }
+    addScaleKeyframe(args) {
+      this.insertVectorKeyframe(args, ".scale");
+    }
+    addEulerRotationKeyframe(args) {
+      const unit = this.normalizeEulerUnit(Scratch.Cast.toString(args.UNIT));
+      this.insertKeyframe({
+        clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+        path: ".quaternion",
+        trackType: "quaternion",
+        time: Scratch.Cast.toNumber(args.TIME),
+        values: this.eulerToQuaternion(
+          Scratch.Cast.toNumber(args.X),
+          Scratch.Cast.toNumber(args.Y),
+          Scratch.Cast.toNumber(args.Z),
+          unit
+        )
+      });
+    }
+    playAnimationClip(args) {
+      const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+      const clip = this.requireAnimationClip(clipName);
+      if (clip.tracks.length === 0) {
+        throw new Error(`3D animation clip has no keyframe tracks: ${clipName}`);
+      }
+      const loop = Scratch.Cast.toBoolean(args.LOOP);
+      for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+        const playback = this.createPlayback(node, clip, loop);
+        this.animationPlaybacks.set(this.playbackKey(node.id, clipName), playback);
+      }
+      this.ensureAnimationTickBridge();
+    }
+    stopAnimationClip(args) {
+      const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+      for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+        this.stopPlayback(this.playbackKey(node.id, clipName), true);
+      }
+    }
+    pauseAnimationClip(args) {
+      const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+      for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+        const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+        if (playback === void 0) continue;
+        playback.paused = true;
+        if (playback.action !== null) {
+          playback.action.paused = true;
+        }
+      }
+    }
+    resumeAnimationClip(args) {
+      const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+      for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+        const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+        if (playback === void 0 || !playback.active) continue;
+        playback.paused = false;
+        if (playback.action !== null) {
+          playback.action.paused = false;
+          playback.action.play?.();
+        }
+      }
+    }
+    setAnimationTimeScale(args) {
+      const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+      const scale = Scratch.Cast.toNumber(args.SCALE);
+      if (!Number.isFinite(scale)) {
+        throw new TypeError("Animation time scale must be a finite number.");
+      }
+      for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+        const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+        if (playback === void 0) continue;
+        playback.timeScale = scale;
+        if (playback.action !== null) {
+          playback.action.timeScale = scale;
+        }
+      }
+    }
+    isAnimationClipPlaying(args) {
+      const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+      return this.matches(Scratch.Cast.toString(args.SELECTOR)).some((node) => {
+        const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+        return playback?.active === true && playback.paused === false;
+      });
+    }
+    testStepAnimations(args) {
+      this.updateAnimationMixers(Scratch.Cast.toNumber(args.DELTA) / 1e3);
+    }
     snapshot() {
       return {
         options: this.sceneOptions,
+        animationClips: [...this.animationClips.values()].map((clip) => ({
+          name: clip.name,
+          duration: clip.duration,
+          tracks: clip.tracks.map((track) => ({
+            type: track.type,
+            path: track.path,
+            times: [...track.times],
+            values: [...track.values]
+          }))
+        })),
+        animationPlaybacks: [...this.animationPlaybacks.values()].map((playback) => ({
+          nodeId: playback.nodeId,
+          clipName: playback.clipName,
+          loop: playback.loop,
+          active: playback.active,
+          playing: playback.active && !playback.paused,
+          paused: playback.paused,
+          timeScale: playback.timeScale,
+          hasMixer: playback.mixer !== null
+        })),
         nodes: [...this.nodes.values()].map((node) => ({
           id: node.id,
           type: node.type,
@@ -199,6 +358,9 @@
       };
     }
     resetGraph() {
+      for (const key of [...this.animationPlaybacks.keys()]) {
+        this.stopPlayback(key, true);
+      }
       this.nodes.clear();
       this.nodes.set(ROOT_ID, {
         id: ROOT_ID,
@@ -260,6 +422,11 @@
       }
       node.element?.remove();
       this.nodes.delete(id);
+      for (const key of [...this.animationPlaybacks.keys()]) {
+        if (key.startsWith(`${id}:`)) {
+          this.stopPlayback(key, true);
+        }
+      }
     }
     matches(selector) {
       const normalized = selector.trim();
@@ -388,6 +555,257 @@
       for (const [name, value] of node.attributes) {
         node.element.setAttribute(name, value);
       }
+    }
+    addKeyframeTrack(args, trackType) {
+      const times = this.parseNumberList(Scratch.Cast.toString(args.TIMES), "times");
+      const values = this.parseNumberList(Scratch.Cast.toString(args.VALUES), "values");
+      this.validateTrackNumbers(times, values, trackType === "vector" ? 3 : 4);
+      this.pushKeyframeTrack({
+        clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+        path: Scratch.Cast.toString(args.PATH),
+        trackType,
+        times,
+        values
+      });
+    }
+    insertVectorKeyframe(args, path) {
+      this.insertKeyframe({
+        clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+        path,
+        trackType: "vector",
+        time: Scratch.Cast.toNumber(args.TIME),
+        values: [
+          Scratch.Cast.toNumber(args.X),
+          Scratch.Cast.toNumber(args.Y),
+          Scratch.Cast.toNumber(args.Z)
+        ]
+      });
+    }
+    insertKeyframe({
+      clipName,
+      path,
+      trackType,
+      time,
+      values
+    }) {
+      if (!Number.isFinite(time) || time < 0) {
+        throw new TypeError("Animation keyframe time must be a non-negative number.");
+      }
+      if (values.some((value) => !Number.isFinite(value))) {
+        throw new TypeError("Animation keyframe values must be finite numbers.");
+      }
+      const stride = trackType === "vector" ? 3 : 4;
+      if (values.length !== stride) {
+        throw new TypeError(`Animation keyframe must contain ${stride} values.`);
+      }
+      const clip = this.requireAnimationClip(clipName);
+      const normalizedPath = this.normalizeTrackPath(path, trackType);
+      let track = clip.tracks.find(
+        (item) => item.type === trackType && item.path === normalizedPath
+      );
+      if (track === void 0) {
+        track = { type: trackType, path: normalizedPath, times: [], values: [] };
+        clip.tracks.push(track);
+      }
+      const insertAt = track.times.findIndex((existingTime) => existingTime >= time);
+      const valueInsertAt = (insertAt < 0 ? track.times.length : insertAt) * stride;
+      if (insertAt >= 0 && track.times[insertAt] === time) {
+        track.values.splice(valueInsertAt, stride, ...values);
+        return;
+      }
+      const timeInsertAt = insertAt < 0 ? track.times.length : insertAt;
+      track.times.splice(timeInsertAt, 0, time);
+      track.values.splice(valueInsertAt, 0, ...values);
+    }
+    pushKeyframeTrack({
+      clipName,
+      path,
+      trackType,
+      times,
+      values
+    }) {
+      const clip = this.requireAnimationClip(clipName);
+      const normalizedPath = this.normalizeTrackPath(path, trackType);
+      clip.tracks.push({
+        type: trackType,
+        path: normalizedPath,
+        times: [...times],
+        values: [...values]
+      });
+    }
+    parseNumberList(source, label) {
+      const trimmed = source.trim();
+      if (trimmed.length === 0) {
+        throw new TypeError(`Animation ${label} must contain at least one number.`);
+      }
+      const values = trimmed.split(/[\s,]+/).filter((part) => part.length > 0).map((part) => Number(part));
+      if (values.length === 0 || values.some((value) => !Number.isFinite(value))) {
+        throw new TypeError(`Animation ${label} must contain only finite numbers.`);
+      }
+      return values;
+    }
+    validateTrackNumbers(times, values, stride) {
+      if (times.length === 0) {
+        throw new TypeError("Animation track times must not be empty.");
+      }
+      for (let index = 1; index < times.length; index += 1) {
+        if ((times[index] ?? 0) < (times[index - 1] ?? 0)) {
+          throw new TypeError("Animation track times must be sorted in ascending order.");
+        }
+      }
+      const expectedValues = times.length * stride;
+      if (values.length !== expectedValues) {
+        throw new TypeError(
+          `Animation track values length must be ${expectedValues} for ${times.length} keyframes.`
+        );
+      }
+    }
+    normalizeTrackPath(path, trackType) {
+      const normalized = path.trim();
+      const allowed = trackType === "vector" ? /* @__PURE__ */ new Set([".position", ".scale"]) : /* @__PURE__ */ new Set([".quaternion"]);
+      if (!allowed.has(normalized)) {
+        throw new TypeError(
+          `Animation ${trackType} track path must be one of: ${[...allowed].join(", ")}.`
+        );
+      }
+      return normalized;
+    }
+    eulerToQuaternion(x, y, z, unit) {
+      const scale = unit === "degrees" ? Math.PI / 180 : 1;
+      const halfX = x * scale / 2;
+      const halfY = y * scale / 2;
+      const halfZ = z * scale / 2;
+      const c1 = Math.cos(halfX);
+      const c2 = Math.cos(halfY);
+      const c3 = Math.cos(halfZ);
+      const s1 = Math.sin(halfX);
+      const s2 = Math.sin(halfY);
+      const s3 = Math.sin(halfZ);
+      return [
+        s1 * c2 * c3 + c1 * s2 * s3,
+        c1 * s2 * c3 - s1 * c2 * s3,
+        c1 * c2 * s3 + s1 * s2 * c3,
+        c1 * c2 * c3 - s1 * s2 * s3
+      ];
+    }
+    normalizeEulerUnit(value) {
+      const unit = value.trim().toLowerCase();
+      if (unit !== "radians" && unit !== "degrees") {
+        throw new TypeError("Euler rotation keyframe unit must be radians or degrees.");
+      }
+      return unit;
+    }
+    createPlayback(node, clip, loop) {
+      const key = this.playbackKey(node.id, clip.name);
+      this.stopPlayback(key, true);
+      const playback = {
+        nodeId: node.id,
+        clipName: clip.name,
+        loop,
+        active: false,
+        paused: false,
+        timeScale: 1,
+        mixer: null,
+        action: null
+      };
+      const mixer = this.createMixer(node, clip, loop);
+      if (mixer !== null) {
+        playback.mixer = mixer.mixer;
+        playback.action = mixer.action;
+        playback.active = true;
+      }
+      return playback;
+    }
+    createMixer(node, clip, loop) {
+      const object3D = this.object3DForNode(node);
+      const THREE = this.getThree();
+      if (object3D === null || THREE === null) return null;
+      const threeClip = this.toThreeAnimationClip(THREE, clip);
+      const mixer = new THREE.AnimationMixer(object3D);
+      const action = mixer.clipAction(threeClip);
+      if (action.setLoop !== void 0) {
+        action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+      }
+      action.paused = false;
+      action.timeScale = 1;
+      action.play?.();
+      return { mixer, action };
+    }
+    toThreeAnimationClip(THREE, clip) {
+      const tracks = clip.tracks.map((track) => {
+        if (track.type === "vector") {
+          return new THREE.VectorKeyframeTrack(track.path, track.times, track.values);
+        }
+        return new THREE.QuaternionKeyframeTrack(track.path, track.times, track.values);
+      });
+      return new THREE.AnimationClip(clip.name, clip.duration, tracks);
+    }
+    object3DForNode(node) {
+      const element = node.element;
+      return element?.object3D ?? null;
+    }
+    stopPlayback(key, remove) {
+      const playback = this.animationPlaybacks.get(key);
+      if (playback === void 0) return;
+      playback.action?.stop?.();
+      playback.mixer?.stopAllAction?.();
+      playback.active = false;
+      playback.paused = false;
+      if (remove) {
+        this.animationPlaybacks.delete(key);
+      }
+    }
+    stopClipEverywhere(clipName) {
+      for (const [key, playback] of [...this.animationPlaybacks.entries()]) {
+        if (playback.clipName === clipName) {
+          this.stopPlayback(key, true);
+        }
+      }
+    }
+    updateAnimationMixers(deltaTime) {
+      if (!Number.isFinite(deltaTime) || deltaTime < 0) return;
+      for (const playback of this.animationPlaybacks.values()) {
+        if (!playback.active || playback.paused) continue;
+        playback.mixer?.update(deltaTime * playback.timeScale);
+      }
+    }
+    ensureAnimationTickBridge() {
+      const scene = this.rootElement;
+      if (scene === null || this.getThree() === null) return;
+      const AFRAME = this.getAFrame();
+      if (AFRAME === null) return;
+      const runtimes = this.animationRuntimeRegistry();
+      runtimes.set(this.runtimeId, this);
+      if (AFRAME.components?.["tw-animation-runtime"] === void 0) {
+        AFRAME.registerComponent("tw-animation-runtime", {
+          schema: { id: { type: "string" } },
+          tick(_time, timeDelta) {
+            const extension = animationRuntimeRegistry().get(this.data.id);
+            extension?.updateAnimationMixers(timeDelta / 1e3);
+          }
+        });
+      }
+      scene.setAttribute("tw-animation-runtime", `id: ${this.runtimeId}`);
+    }
+    animationRuntimeRegistry() {
+      return animationRuntimeRegistry();
+    }
+    getAFrame() {
+      const value = globalThis.AFRAME;
+      return value ?? null;
+    }
+    getThree() {
+      return this.getAFrame()?.THREE ?? null;
+    }
+    playbackKey(nodeId, clipName) {
+      return `${nodeId}:${clipName}`;
+    }
+    requireAnimationClip(name) {
+      const clip = this.animationClips.get(name);
+      if (clip === void 0) {
+        throw new Error(`Unknown 3D animation clip: ${name}`);
+      }
+      return clip;
     }
     setVec3Attribute(selector, name, value) {
       for (const node of this.matches(selector)) {
@@ -541,6 +959,11 @@
         )
       };
     }
+  }
+  function animationRuntimeRegistry() {
+    const globalState = globalThis;
+    globalState.__twAframeAnimationRuntimes ?? (globalState.__twAframeAnimationRuntimes = /* @__PURE__ */ new Map());
+    return globalState.__twAframeAnimationRuntimes;
   }
   if (!Scratch.extensions.unsandboxed) {
     throw new Error(`${extensionConfig.name} must run unsandboxed.`);
