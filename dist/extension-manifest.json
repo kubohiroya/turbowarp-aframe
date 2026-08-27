@@ -110,16 +110,6 @@
       "arguments": []
     },
     {
-      "opcode": "loadSceneYaml",
-      "blockType": "COMMAND",
-      "arguments": [
-        {
-          "id": "SOURCE",
-          "type": "STRING"
-        }
-      ]
-    },
-    {
       "opcode": "loadTemplate",
       "blockType": "COMMAND",
       "arguments": [
@@ -154,11 +144,6 @@
           "type": "NUMBER"
         }
       ]
-    },
-    {
-      "opcode": "sceneYaml",
-      "blockType": "REPORTER",
-      "arguments": []
     },
     {
       "opcode": "setAttribute",

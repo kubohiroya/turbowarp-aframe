@@ -124,25 +124,6 @@
       }
     },
     {
-      "opcode": "loadSceneYaml",
-      "blockType": "COMMAND",
-      "text": "load 3D scene YAML [SOURCE]",
-      "description": "Replaces the current scene graph with a YAML DSL scene definition.",
-      "arguments": {
-        "SOURCE": {
-          "type": "STRING",
-          "defaultValue": "formatVersion: 1\noptions:\n  layer: above-stage\n  mode: 3d\nroot:\n  children:\n    - type: box\n      id: card\n      class: monster\n      attributes:\n        position: 0 1 -3\n"
-        }
-      }
-    },
-    {
-      "opcode": "sceneYaml",
-      "blockType": "REPORTER",
-      "text": "3D scene YAML",
-      "description": "Exports the current scene graph as a YAML DSL string.",
-      "arguments": {}
-    },
-    {
       "opcode": "countSelector",
       "blockType": "REPORTER",
       "text": "count selector [SELECTOR]",

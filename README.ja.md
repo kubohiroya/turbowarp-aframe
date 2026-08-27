@@ -13,7 +13,6 @@ Scratch のスプライトや背景を 3D オブジェクトとして扱うの�
 - `#id`、`.class`、`[data-key=value]` の限定セレクタでノードを選びます。
 - local `position`、`rotation`、class、`data-*`、visible、A-Frame component 属性を操作します。
 - JSON template を読み込み、instance id を明示して部分シーングラフを生成します。
-- ブロックで作ったシーングラフを YAML DSL として書き出し、同じ YAML DSL を読み込んで編集可能なシーングラフとして復元します。
 - A-Frame host を検出した TurboWarp stage 近傍へ mount し、scene ready、DOM pointer/click、selector 単位の custom event をハットブロックで扱います。
 - 当たり判定と AR 連携は Issue #1 に基づく次段階の API 境界として文書化しています。
 
@@ -62,8 +61,6 @@ pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.1.0
 - `set selector [SELECTOR] data [KEY] to [VALUE]`
 - `set selector [SELECTOR] attribute [NAME] to [VALUE]`
 - `delete selector [SELECTOR]`
-- `load 3D scene YAML [SOURCE]`
-- `3D scene YAML`
 - `count selector [SELECTOR]`
 - `event target id`
 - `emit 3D event [TYPE] from selector [SELECTOR] with data [DATA]`
@@ -83,29 +80,6 @@ pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.1.0
 - event ハット実行後の `@event` または `event target`
 
 複数一致する selector に対して command ブロックは全件に適用します。template の parent や event emit の target のように 1 ノードが必要な場合は、グラフ挿入順の first match を使います。
-
-## YAML DSL
-
-`3D scene YAML` は、ブロックで構築した現在の graph を書き出します。`load 3D scene YAML [SOURCE]` は同じ DSL 形状から graph を置き換えるため、ブロック中心の制作とテキスト中心の編集を往復できます。
-
-```yaml
-formatVersion: 1
-options:
-  layer: above-stage
-  mode: 3d
-root:
-  children:
-    - type: box
-      id: card
-      class: monster
-      data:
-        zone: field
-      attributes:
-        position: 0 1 -3
-        material: "color: #4cffb0"
-```
-
-YAML を parse した後の構造は [schemas/aframe-scene-yaml.schema.json](schemas/aframe-scene-yaml.schema.json) で定義します。再利用する node/template の形は [schemas/aframe-template.schema.json](schemas/aframe-template.schema.json) です。
 
 ## アーキテクチャ
 
