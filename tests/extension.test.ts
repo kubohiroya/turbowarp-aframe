@@ -5,6 +5,7 @@ class FakeElement {
   public readonly tagName: string;
   public readonly children: FakeElement[] = [];
   public readonly dataset: Record<string, string> = {};
+  public readonly object3D: Record<string, unknown> = {};
   public readonly style: Record<string, string> = {};
   public parentElement: FakeElement | null = null;
   public attributes: Record<string, string> = {};
@@ -86,11 +87,12 @@ class FakeDocument {
 
 beforeEach(() => {
   vi.stubGlobal('Scratch', {
-    BlockType: {COMMAND: 'command', HAT: 'hat', REPORTER: 'reporter'},
+    BlockType: {BOOLEAN: 'boolean', COMMAND: 'command', HAT: 'hat', REPORTER: 'reporter'},
     ArgumentType: {NUMBER: 'number', STRING: 'string'},
     Cast: {
       toString: (value: unknown) => String(value),
-      toNumber: (value: unknown) => Number(value)
+      toNumber: (value: unknown) => Number(value),
+      toBoolean: (value: unknown) => Boolean(value)
     },
     translate: (
       message: string | {default: string},
@@ -257,4 +259,206 @@ describe('TurboWarpAFrameExtension', () => {
     ).toThrow('Unknown A-Frame template: bad');
   });
 
+  it('defines animation clips and validates keyframe track lengths before mutating registry', () => {
+    const extension = new TurboWarpAFrameExtension();
+
+    extension.createAnimationClip({NAME: 'wave', DURATION: 1});
+    extension.addVectorKeyframeTrack({
+      CLIP: 'wave',
+      PATH: '.position',
+      TIMES: '0, 0.5, 1',
+      VALUES: '0,1,-3, 0,1.5,-3, 0,1,-3'
+    });
+    extension.addEulerRotationKeyframeTrack({
+      CLIP: 'wave',
+      PATH: '.quaternion',
+      TIMES: '0, 1',
+      VALUES: '0,0,0, 0,0,180',
+      UNIT: 'degrees'
+    });
+
+    const snapshot = extension.snapshot() as {
+      animationClips: Array<{
+        name: string;
+        duration: number;
+        tracks: Array<{type: string; path: string; values: number[]}>;
+      }>;
+    };
+    const clip = snapshot.animationClips.find((item) => item.name === 'wave');
+    expect(clip).toMatchObject({
+      name: 'wave',
+      duration: 1,
+      tracks: [
+        {type: 'vector', path: '.position'},
+        {type: 'quaternion', path: '.quaternion'}
+      ]
+    });
+    expect(clip?.tracks[1]?.values).toHaveLength(8);
+    expect(clip?.tracks[1]?.values[6]).toBeCloseTo(1);
+    expect(clip?.tracks[1]?.values[7]).toBeCloseTo(0);
+
+    expect(() =>
+      extension.addQuaternionKeyframeTrack({
+        CLIP: 'wave',
+        PATH: '.quaternion',
+        TIMES: '0,1',
+        VALUES: '0,0,0,1'
+      })
+    ).toThrow('Animation track values length must be 8 for 2 keyframes.');
+    expect((extension.snapshot() as typeof snapshot).animationClips[0]?.tracks).toHaveLength(2);
+  });
+
+  it('adds user-friendly keyframes one at a time and replaces duplicate keyframe times', () => {
+    const extension = new TurboWarpAFrameExtension();
+
+    extension.createAnimationClip({NAME: 'wave', DURATION: 1});
+    extension.addPositionKeyframe({CLIP: 'wave', TIME: 1, X: 0, Y: 1, Z: -3});
+    extension.addPositionKeyframe({CLIP: 'wave', TIME: 0, X: 0, Y: 0.5, Z: -3});
+    extension.addPositionKeyframe({CLIP: 'wave', TIME: 1, X: 0, Y: 1.25, Z: -3});
+    extension.addEulerRotationKeyframe({
+      CLIP: 'wave',
+      TIME: 0.5,
+      X: 0,
+      Y: 0,
+      Z: Math.PI,
+      UNIT: 'radians'
+    });
+
+    const snapshot = extension.snapshot() as {
+      animationClips: Array<{
+        tracks: Array<{type: string; path: string; times: number[]; values: number[]}>;
+      }>;
+    };
+    const tracks = snapshot.animationClips[0]?.tracks ?? [];
+    expect(tracks.find((track) => track.path === '.position')).toMatchObject({
+      times: [0, 1],
+      values: [0, 0.5, -3, 0, 1.25, -3]
+    });
+    const rotation = tracks.find((track) => track.path === '.quaternion');
+    expect(rotation?.type).toBe('quaternion');
+    expect(rotation?.values[2]).toBeCloseTo(1);
+    expect(rotation?.values[3]).toBeCloseTo(0);
+  });
+
+  it('rejects playback for empty animation clips with a clear error', () => {
+    const extension = new TurboWarpAFrameExtension();
+    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    extension.createNode({TYPE: 'box', ID: 'leftArm', PARENT: '#scene'});
+    extension.createAnimationClip({NAME: 'empty', DURATION: 1});
+
+    expect(() =>
+      extension.playAnimationClip({CLIP: 'empty', SELECTOR: '#leftArm', LOOP: true})
+    ).toThrow('3D animation clip has no keyframe tracks: empty');
+  });
+
+  it('plays animation clips with a Three.js mixer when object3D is available', () => {
+    const updates: number[] = [];
+    interface FakeAction {
+      paused?: boolean;
+      stopped?: boolean;
+      timeScale?: number;
+      play(): FakeAction;
+      stop(): FakeAction;
+      setLoop(): FakeAction;
+    }
+    const actions: FakeAction[] = [];
+    const components: Record<string, unknown> = {};
+    vi.stubGlobal('AFRAME', {
+      components,
+      THREE: {
+        AnimationClip: class {
+          public constructor(
+            public readonly name: string,
+            public readonly duration: number,
+            public readonly tracks: unknown[]
+          ) {}
+        },
+        AnimationMixer: class {
+          public constructor(public readonly root: unknown) {}
+          public clipAction(): FakeAction {
+            const action: FakeAction = {
+              paused: false,
+              timeScale: 1,
+              play: () => action,
+              stop: () => {
+                action.stopped = true;
+                return action;
+              },
+              setLoop: () => action
+            };
+            actions.push(action);
+            return action;
+          }
+          public update(deltaTime: number): void {
+            updates.push(deltaTime);
+          }
+        },
+        LoopOnce: 'once',
+        LoopRepeat: 'repeat',
+        QuaternionKeyframeTrack: class {
+          public constructor(
+            public readonly name: string,
+            public readonly times: number[],
+            public readonly values: number[]
+          ) {}
+        },
+        VectorKeyframeTrack: class {
+          public constructor(
+            public readonly name: string,
+            public readonly times: number[],
+            public readonly values: number[]
+          ) {}
+        }
+      },
+      registerComponent: (name: string, definition: unknown) => {
+        components[name] = definition;
+      }
+    });
+    const document = new FakeDocument();
+    vi.stubGlobal('document', document);
+    vi.stubGlobal('HTMLElement', FakeElement);
+    vi.stubGlobal('HTMLCanvasElement', FakeCanvasElement);
+    vi.stubGlobal('getComputedStyle', () => ({position: 'static'}));
+    vi.stubGlobal(
+      'CustomEvent',
+      class {
+        public readonly type: string;
+        public readonly detail: unknown;
+
+        public constructor(type: string, init: {detail?: unknown} = {}) {
+          this.type = type;
+          this.detail = init.detail;
+        }
+      }
+    );
+
+    const extension = new TurboWarpAFrameExtension();
+    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    extension.createNode({TYPE: 'box', ID: 'leftArm', PARENT: '#scene'});
+    extension.createAnimationClip({NAME: 'wave', DURATION: 1});
+    extension.addQuaternionKeyframeTrack({
+      CLIP: 'wave',
+      PATH: '.quaternion',
+      TIMES: '0,0.5,1',
+      VALUES: '0,0,0,1, 0,0,0.389,0.921, 0,0,0,1'
+    });
+
+    extension.playAnimationClip({CLIP: 'wave', SELECTOR: '#leftArm', LOOP: true});
+
+    expect(extension.isAnimationClipPlaying({CLIP: 'wave', SELECTOR: '#leftArm'})).toBe(true);
+    extension.setAnimationTimeScale({CLIP: 'wave', SELECTOR: '#leftArm', SCALE: 2});
+    extension.testStepAnimations({DELTA: 16});
+    expect(updates).toEqual([0.032]);
+    expect(actions[0]?.timeScale).toBe(2);
+
+    extension.pauseAnimationClip({CLIP: 'wave', SELECTOR: '#leftArm'});
+    expect(extension.isAnimationClipPlaying({CLIP: 'wave', SELECTOR: '#leftArm'})).toBe(false);
+    expect(actions[0]?.paused).toBe(true);
+    extension.resumeAnimationClip({CLIP: 'wave', SELECTOR: '#leftArm'});
+    expect(extension.isAnimationClipPlaying({CLIP: 'wave', SELECTOR: '#leftArm'})).toBe(true);
+    expect(actions[0]?.paused).toBe(false);
+
+    extension.stopAnimationClip({CLIP: 'wave', SELECTOR: '#leftArm'});
+    expect(actions[0]?.stopped).toBe(true);
+  });
 });

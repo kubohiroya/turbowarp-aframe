@@ -1,13 +1,13 @@
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
 
-type BlockTypeName = 'COMMAND' | 'REPORTER' | 'HAT';
-type ArgumentTypeName = 'STRING' | 'NUMBER';
+type BlockTypeName = 'COMMAND' | 'REPORTER' | 'HAT' | 'BOOLEAN';
+type ArgumentTypeName = 'STRING' | 'NUMBER' | 'BOOLEAN';
 type Vec3 = {x: number; y: number; z: number};
 
 interface DefinitionArgument {
   type: ArgumentTypeName;
-  defaultValue?: string | number;
+  defaultValue?: string | number | boolean;
 }
 
 interface BlockDefinition {
@@ -50,6 +50,61 @@ interface SceneOptions {
   mode: string;
 }
 
+type KeyframeTrackType = 'vector' | 'quaternion';
+
+interface KeyframeTrackDefinition {
+  type: KeyframeTrackType;
+  path: string;
+  times: number[];
+  values: number[];
+}
+
+interface AnimationClipDefinition {
+  name: string;
+  duration: number;
+  tracks: KeyframeTrackDefinition[];
+}
+
+interface AnimationPlayback {
+  nodeId: string;
+  clipName: string;
+  loop: boolean;
+  active: boolean;
+  paused: boolean;
+  timeScale: number;
+  mixer: AnimationMixerLike | null;
+  action: AnimationActionLike | null;
+}
+
+interface AnimationActionLike {
+  paused?: boolean;
+  timeScale?: number;
+  setLoop?(mode: unknown, repetitions: number): AnimationActionLike;
+  play?(): AnimationActionLike;
+  stop?(): AnimationActionLike;
+}
+
+interface AnimationMixerLike {
+  clipAction(clip: unknown): AnimationActionLike;
+  update(deltaTime: number): void;
+  stopAllAction?(): void;
+}
+
+interface ThreeAnimationApi {
+  AnimationClip: new (name: string, duration: number, tracks: unknown[]) => unknown;
+  AnimationMixer: new (root: unknown) => AnimationMixerLike;
+  LoopOnce?: unknown;
+  LoopRepeat?: unknown;
+  QuaternionKeyframeTrack: new (name: string, times: number[], values: number[]) => unknown;
+  VectorKeyframeTrack: new (name: string, times: number[], values: number[]) => unknown;
+}
+
+type AFrameApi = {
+  THREE?: ThreeAnimationApi;
+  components?: Record<string, unknown>;
+  registerComponent(name: string, definition: unknown): void;
+};
+
 const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
 const ROOT_ID = 'scene';
 const DOM_EVENT_TYPES = ['click', 'tap', 'pointerenter', 'pointerleave'] as const;
@@ -66,8 +121,11 @@ const TEMPLATE_NODE_KEYS = new Set([
 export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private readonly nodes = new Map<string, SceneNode>();
   private readonly templates = new Map<string, TemplateNode>();
+  private readonly animationClips = new Map<string, AnimationClipDefinition>();
+  private readonly animationPlaybacks = new Map<string, AnimationPlayback>();
   private readonly eventQueue: SceneEvent[] = [];
   private readonly domEventTypes = new Set<string>(DOM_EVENT_TYPES);
+  private readonly runtimeId = `twaframe-${Math.random().toString(36).slice(2)}`;
   private sceneOptions: SceneOptions = {layer: 'above-stage', mode: '3d'};
   private rootElement: Element | null = null;
   private sceneReadyPending = false;
@@ -235,9 +293,215 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     return event !== undefined;
   }
 
+  public createAnimationClip(args: {NAME: unknown; DURATION: unknown}): void {
+    const name = this.normalizeId(Scratch.Cast.toString(args.NAME));
+    const duration = Scratch.Cast.toNumber(args.DURATION);
+    if (!Number.isFinite(duration) || duration < -1) {
+      throw new TypeError('Animation clip duration must be -1 or a non-negative number.');
+    }
+    this.stopClipEverywhere(name);
+    this.animationClips.set(name, {
+      name,
+      duration,
+      tracks: []
+    });
+  }
+
+  public deleteAnimationClip(args: {NAME: unknown}): void {
+    const name = this.normalizeId(Scratch.Cast.toString(args.NAME));
+    this.stopClipEverywhere(name);
+    this.animationClips.delete(name);
+  }
+
+  public addVectorKeyframeTrack(args: {
+    CLIP: unknown;
+    PATH: unknown;
+    TIMES: unknown;
+    VALUES: unknown;
+  }): void {
+    this.addKeyframeTrack(args, 'vector');
+  }
+
+  public addQuaternionKeyframeTrack(args: {
+    CLIP: unknown;
+    PATH: unknown;
+    TIMES: unknown;
+    VALUES: unknown;
+  }): void {
+    this.addKeyframeTrack(args, 'quaternion');
+  }
+
+  public addEulerRotationKeyframeTrack(args: {
+    CLIP: unknown;
+    PATH: unknown;
+    TIMES: unknown;
+    VALUES: unknown;
+    UNIT: unknown;
+  }): void {
+    const times = this.parseNumberList(Scratch.Cast.toString(args.TIMES), 'times');
+    const eulerValues = this.parseNumberList(Scratch.Cast.toString(args.VALUES), 'values');
+    this.validateTrackNumbers(times, eulerValues, 3);
+    const unit = this.normalizeEulerUnit(Scratch.Cast.toString(args.UNIT));
+    const values: number[] = [];
+    for (let index = 0; index < eulerValues.length; index += 3) {
+      values.push(
+        ...this.eulerToQuaternion(
+          eulerValues[index] ?? 0,
+          eulerValues[index + 1] ?? 0,
+          eulerValues[index + 2] ?? 0,
+          unit
+        )
+      );
+    }
+    this.pushKeyframeTrack({
+      clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+      path: Scratch.Cast.toString(args.PATH),
+      trackType: 'quaternion',
+      times,
+      values
+    });
+  }
+
+  public addPositionKeyframe(args: {
+    CLIP: unknown;
+    TIME: unknown;
+    X: unknown;
+    Y: unknown;
+    Z: unknown;
+  }): void {
+    this.insertVectorKeyframe(args, '.position');
+  }
+
+  public addScaleKeyframe(args: {
+    CLIP: unknown;
+    TIME: unknown;
+    X: unknown;
+    Y: unknown;
+    Z: unknown;
+  }): void {
+    this.insertVectorKeyframe(args, '.scale');
+  }
+
+  public addEulerRotationKeyframe(args: {
+    CLIP: unknown;
+    TIME: unknown;
+    X: unknown;
+    Y: unknown;
+    Z: unknown;
+    UNIT: unknown;
+  }): void {
+    const unit = this.normalizeEulerUnit(Scratch.Cast.toString(args.UNIT));
+    this.insertKeyframe({
+      clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+      path: '.quaternion',
+      trackType: 'quaternion',
+      time: Scratch.Cast.toNumber(args.TIME),
+      values: this.eulerToQuaternion(
+        Scratch.Cast.toNumber(args.X),
+        Scratch.Cast.toNumber(args.Y),
+        Scratch.Cast.toNumber(args.Z),
+        unit
+      )
+    });
+  }
+
+  public playAnimationClip(args: {CLIP: unknown; SELECTOR: unknown; LOOP: unknown}): void {
+    const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+    const clip = this.requireAnimationClip(clipName);
+    if (clip.tracks.length === 0) {
+      throw new Error(`3D animation clip has no keyframe tracks: ${clipName}`);
+    }
+    const loop = Scratch.Cast.toBoolean(args.LOOP);
+    for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+      const playback = this.createPlayback(node, clip, loop);
+      this.animationPlaybacks.set(this.playbackKey(node.id, clipName), playback);
+    }
+    this.ensureAnimationTickBridge();
+  }
+
+  public stopAnimationClip(args: {CLIP: unknown; SELECTOR: unknown}): void {
+    const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+    for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+      this.stopPlayback(this.playbackKey(node.id, clipName), true);
+    }
+  }
+
+  public pauseAnimationClip(args: {CLIP: unknown; SELECTOR: unknown}): void {
+    const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+    for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+      const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+      if (playback === undefined) continue;
+      playback.paused = true;
+      if (playback.action !== null) {
+        playback.action.paused = true;
+      }
+    }
+  }
+
+  public resumeAnimationClip(args: {CLIP: unknown; SELECTOR: unknown}): void {
+    const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+    for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+      const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+      if (playback === undefined || !playback.active) continue;
+      playback.paused = false;
+      if (playback.action !== null) {
+        playback.action.paused = false;
+        playback.action.play?.();
+      }
+    }
+  }
+
+  public setAnimationTimeScale(args: {CLIP: unknown; SELECTOR: unknown; SCALE: unknown}): void {
+    const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+    const scale = Scratch.Cast.toNumber(args.SCALE);
+    if (!Number.isFinite(scale)) {
+      throw new TypeError('Animation time scale must be a finite number.');
+    }
+    for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+      const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+      if (playback === undefined) continue;
+      playback.timeScale = scale;
+      if (playback.action !== null) {
+        playback.action.timeScale = scale;
+      }
+    }
+  }
+
+  public isAnimationClipPlaying(args: {CLIP: unknown; SELECTOR: unknown}): boolean {
+    const clipName = this.normalizeId(Scratch.Cast.toString(args.CLIP));
+    return this.matches(Scratch.Cast.toString(args.SELECTOR)).some((node) => {
+      const playback = this.animationPlaybacks.get(this.playbackKey(node.id, clipName));
+      return playback?.active === true && playback.paused === false;
+    });
+  }
+
+  public testStepAnimations(args: {DELTA: unknown}): void {
+    this.updateAnimationMixers(Scratch.Cast.toNumber(args.DELTA) / 1000);
+  }
+
   public snapshot(): Record<string, unknown> {
     return {
       options: this.sceneOptions,
+      animationClips: [...this.animationClips.values()].map((clip) => ({
+        name: clip.name,
+        duration: clip.duration,
+        tracks: clip.tracks.map((track) => ({
+          type: track.type,
+          path: track.path,
+          times: [...track.times],
+          values: [...track.values]
+        }))
+      })),
+      animationPlaybacks: [...this.animationPlaybacks.values()].map((playback) => ({
+        nodeId: playback.nodeId,
+        clipName: playback.clipName,
+        loop: playback.loop,
+        active: playback.active,
+        playing: playback.active && !playback.paused,
+        paused: playback.paused,
+        timeScale: playback.timeScale,
+        hasMixer: playback.mixer !== null
+      })),
       nodes: [...this.nodes.values()].map((node) => ({
         id: node.id,
         type: node.type,
@@ -251,6 +515,9 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   }
 
   private resetGraph(): void {
+    for (const key of [...this.animationPlaybacks.keys()]) {
+      this.stopPlayback(key, true);
+    }
     this.nodes.clear();
     this.nodes.set(ROOT_ID, {
       id: ROOT_ID,
@@ -315,6 +582,11 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     }
     node.element?.remove();
     this.nodes.delete(id);
+    for (const key of [...this.animationPlaybacks.keys()]) {
+      if (key.startsWith(`${id}:`)) {
+        this.stopPlayback(key, true);
+      }
+    }
   }
 
   private matches(selector: string): SceneNode[] {
@@ -459,6 +731,314 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     for (const [name, value] of node.attributes) {
       node.element.setAttribute(name, value);
     }
+  }
+
+  private addKeyframeTrack(
+    args: {CLIP: unknown; PATH: unknown; TIMES: unknown; VALUES: unknown},
+    trackType: KeyframeTrackType
+  ): void {
+    const times = this.parseNumberList(Scratch.Cast.toString(args.TIMES), 'times');
+    const values = this.parseNumberList(Scratch.Cast.toString(args.VALUES), 'values');
+    this.validateTrackNumbers(times, values, trackType === 'vector' ? 3 : 4);
+    this.pushKeyframeTrack({
+      clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+      path: Scratch.Cast.toString(args.PATH),
+      trackType,
+      times,
+      values
+    });
+  }
+
+  private insertVectorKeyframe(
+    args: {CLIP: unknown; TIME: unknown; X: unknown; Y: unknown; Z: unknown},
+    path: '.position' | '.scale'
+  ): void {
+    this.insertKeyframe({
+      clipName: this.normalizeId(Scratch.Cast.toString(args.CLIP)),
+      path,
+      trackType: 'vector',
+      time: Scratch.Cast.toNumber(args.TIME),
+      values: [
+        Scratch.Cast.toNumber(args.X),
+        Scratch.Cast.toNumber(args.Y),
+        Scratch.Cast.toNumber(args.Z)
+      ]
+    });
+  }
+
+  private insertKeyframe({
+    clipName,
+    path,
+    trackType,
+    time,
+    values
+  }: {
+    clipName: string;
+    path: string;
+    trackType: KeyframeTrackType;
+    time: number;
+    values: readonly number[];
+  }): void {
+    if (!Number.isFinite(time) || time < 0) {
+      throw new TypeError('Animation keyframe time must be a non-negative number.');
+    }
+    if (values.some((value) => !Number.isFinite(value))) {
+      throw new TypeError('Animation keyframe values must be finite numbers.');
+    }
+    const stride = trackType === 'vector' ? 3 : 4;
+    if (values.length !== stride) {
+      throw new TypeError(`Animation keyframe must contain ${stride} values.`);
+    }
+    const clip = this.requireAnimationClip(clipName);
+    const normalizedPath = this.normalizeTrackPath(path, trackType);
+    let track = clip.tracks.find(
+      (item) => item.type === trackType && item.path === normalizedPath
+    );
+    if (track === undefined) {
+      track = {type: trackType, path: normalizedPath, times: [], values: []};
+      clip.tracks.push(track);
+    }
+    const insertAt = track.times.findIndex((existingTime) => existingTime >= time);
+    const valueInsertAt = (insertAt < 0 ? track.times.length : insertAt) * stride;
+    if (insertAt >= 0 && track.times[insertAt] === time) {
+      track.values.splice(valueInsertAt, stride, ...values);
+      return;
+    }
+    const timeInsertAt = insertAt < 0 ? track.times.length : insertAt;
+    track.times.splice(timeInsertAt, 0, time);
+    track.values.splice(valueInsertAt, 0, ...values);
+  }
+
+  private pushKeyframeTrack({
+    clipName,
+    path,
+    trackType,
+    times,
+    values
+  }: {
+    clipName: string;
+    path: string;
+    trackType: KeyframeTrackType;
+    times: number[];
+    values: number[];
+  }): void {
+    const clip = this.requireAnimationClip(clipName);
+    const normalizedPath = this.normalizeTrackPath(path, trackType);
+    clip.tracks.push({
+      type: trackType,
+      path: normalizedPath,
+      times: [...times],
+      values: [...values]
+    });
+  }
+
+  private parseNumberList(source: string, label: string): number[] {
+    const trimmed = source.trim();
+    if (trimmed.length === 0) {
+      throw new TypeError(`Animation ${label} must contain at least one number.`);
+    }
+    const values = trimmed
+      .split(/[\s,]+/)
+      .filter((part) => part.length > 0)
+      .map((part) => Number(part));
+    if (values.length === 0 || values.some((value) => !Number.isFinite(value))) {
+      throw new TypeError(`Animation ${label} must contain only finite numbers.`);
+    }
+    return values;
+  }
+
+  private validateTrackNumbers(times: number[], values: number[], stride: number): void {
+    if (times.length === 0) {
+      throw new TypeError('Animation track times must not be empty.');
+    }
+    for (let index = 1; index < times.length; index += 1) {
+      if ((times[index] ?? 0) < (times[index - 1] ?? 0)) {
+        throw new TypeError('Animation track times must be sorted in ascending order.');
+      }
+    }
+    const expectedValues = times.length * stride;
+    if (values.length !== expectedValues) {
+      throw new TypeError(
+        `Animation track values length must be ${expectedValues} for ${times.length} keyframes.`
+      );
+    }
+  }
+
+  private normalizeTrackPath(path: string, trackType: KeyframeTrackType): string {
+    const normalized = path.trim();
+    const allowed =
+      trackType === 'vector' ? new Set(['.position', '.scale']) : new Set(['.quaternion']);
+    if (!allowed.has(normalized)) {
+      throw new TypeError(
+        `Animation ${trackType} track path must be one of: ${[...allowed].join(', ')}.`
+      );
+    }
+    return normalized;
+  }
+
+  private eulerToQuaternion(
+    x: number,
+    y: number,
+    z: number,
+    unit: 'degrees' | 'radians'
+  ): [number, number, number, number] {
+    const scale = unit === 'degrees' ? Math.PI / 180 : 1;
+    const halfX = (x * scale) / 2;
+    const halfY = (y * scale) / 2;
+    const halfZ = (z * scale) / 2;
+    const c1 = Math.cos(halfX);
+    const c2 = Math.cos(halfY);
+    const c3 = Math.cos(halfZ);
+    const s1 = Math.sin(halfX);
+    const s2 = Math.sin(halfY);
+    const s3 = Math.sin(halfZ);
+    return [
+      s1 * c2 * c3 + c1 * s2 * s3,
+      c1 * s2 * c3 - s1 * c2 * s3,
+      c1 * c2 * s3 + s1 * s2 * c3,
+      c1 * c2 * c3 - s1 * s2 * s3
+    ];
+  }
+
+  private normalizeEulerUnit(value: string): 'degrees' | 'radians' {
+    const unit = value.trim().toLowerCase();
+    if (unit !== 'radians' && unit !== 'degrees') {
+      throw new TypeError('Euler rotation keyframe unit must be radians or degrees.');
+    }
+    return unit;
+  }
+
+  private createPlayback(
+    node: SceneNode,
+    clip: AnimationClipDefinition,
+    loop: boolean
+  ): AnimationPlayback {
+    const key = this.playbackKey(node.id, clip.name);
+    this.stopPlayback(key, true);
+    const playback: AnimationPlayback = {
+      nodeId: node.id,
+      clipName: clip.name,
+      loop,
+      active: false,
+      paused: false,
+      timeScale: 1,
+      mixer: null,
+      action: null
+    };
+    const mixer = this.createMixer(node, clip, loop);
+    if (mixer !== null) {
+      playback.mixer = mixer.mixer;
+      playback.action = mixer.action;
+      playback.active = true;
+    }
+    return playback;
+  }
+
+  private createMixer(
+    node: SceneNode,
+    clip: AnimationClipDefinition,
+    loop: boolean
+  ): {mixer: AnimationMixerLike; action: AnimationActionLike} | null {
+    const object3D = this.object3DForNode(node);
+    const THREE = this.getThree();
+    if (object3D === null || THREE === null) return null;
+    const threeClip = this.toThreeAnimationClip(THREE, clip);
+    const mixer = new THREE.AnimationMixer(object3D);
+    const action = mixer.clipAction(threeClip);
+    if (action.setLoop !== undefined) {
+      action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+    }
+    action.paused = false;
+    action.timeScale = 1;
+    action.play?.();
+    return {mixer, action};
+  }
+
+  private toThreeAnimationClip(THREE: ThreeAnimationApi, clip: AnimationClipDefinition): unknown {
+    const tracks = clip.tracks.map((track) => {
+      if (track.type === 'vector') {
+        return new THREE.VectorKeyframeTrack(track.path, track.times, track.values);
+      }
+      return new THREE.QuaternionKeyframeTrack(track.path, track.times, track.values);
+    });
+    return new THREE.AnimationClip(clip.name, clip.duration, tracks);
+  }
+
+  private object3DForNode(node: SceneNode): unknown | null {
+    const element = node.element as (Element & {object3D?: unknown}) | null;
+    return element?.object3D ?? null;
+  }
+
+  private stopPlayback(key: string, remove: boolean): void {
+    const playback = this.animationPlaybacks.get(key);
+    if (playback === undefined) return;
+    playback.action?.stop?.();
+    playback.mixer?.stopAllAction?.();
+    playback.active = false;
+    playback.paused = false;
+    if (remove) {
+      this.animationPlaybacks.delete(key);
+    }
+  }
+
+  private stopClipEverywhere(clipName: string): void {
+    for (const [key, playback] of [...this.animationPlaybacks.entries()]) {
+      if (playback.clipName === clipName) {
+        this.stopPlayback(key, true);
+      }
+    }
+  }
+
+  private updateAnimationMixers(deltaTime: number): void {
+    if (!Number.isFinite(deltaTime) || deltaTime < 0) return;
+    for (const playback of this.animationPlaybacks.values()) {
+      if (!playback.active || playback.paused) continue;
+      playback.mixer?.update(deltaTime * playback.timeScale);
+    }
+  }
+
+  private ensureAnimationTickBridge(): void {
+    const scene = this.rootElement;
+    if (scene === null || this.getThree() === null) return;
+    const AFRAME = this.getAFrame();
+    if (AFRAME === null) return;
+    const runtimes = this.animationRuntimeRegistry();
+    runtimes.set(this.runtimeId, this);
+    if (AFRAME.components?.['tw-animation-runtime'] === undefined) {
+      AFRAME.registerComponent('tw-animation-runtime', {
+        schema: {id: {type: 'string'}},
+        tick(this: {data: {id: string}}, _time: number, timeDelta: number) {
+          const extension = animationRuntimeRegistry().get(this.data.id);
+          extension?.updateAnimationMixers(timeDelta / 1000);
+        }
+      });
+    }
+    scene.setAttribute('tw-animation-runtime', `id: ${this.runtimeId}`);
+  }
+
+  private animationRuntimeRegistry(): Map<string, TurboWarpAFrameExtension> {
+    return animationRuntimeRegistry();
+  }
+
+  private getAFrame(): AFrameApi | null {
+    const value = (globalThis as {AFRAME?: AFrameApi}).AFRAME;
+    return value ?? null;
+  }
+
+  private getThree(): ThreeAnimationApi | null {
+    return this.getAFrame()?.THREE ?? null;
+  }
+
+  private playbackKey(nodeId: string, clipName: string): string {
+    return `${nodeId}:${clipName}`;
+  }
+
+  private requireAnimationClip(name: string): AnimationClipDefinition {
+    const clip = this.animationClips.get(name);
+    if (clip === undefined) {
+      throw new Error(`Unknown 3D animation clip: ${name}`);
+    }
+    return clip;
   }
 
   private setVec3Attribute(selector: string, name: string, value: Vec3): void {
@@ -635,4 +1215,12 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
       )
     };
   }
+}
+
+function animationRuntimeRegistry(): Map<string, TurboWarpAFrameExtension> {
+  const globalState = globalThis as {
+    __twAframeAnimationRuntimes?: Map<string, TurboWarpAFrameExtension>;
+  };
+  globalState.__twAframeAnimationRuntimes ??= new Map();
+  return globalState.__twAframeAnimationRuntimes;
 }

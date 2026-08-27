@@ -17,7 +17,7 @@
   <h2>Scene model</h2>
   <p>Scratch sprites and backdrops are script containers. The 3D graph is addressed through node ids, classes, data attributes, A-Frame attributes, templates, selectors, and events.</p>
 
-  <h2>Initial blocks</h2>
+  <h2>Core blocks</h2>
   <ul>
     <li><code>create 3D scene with layer [LAYER] mode [MODE]</code></li>
     <li><code>load template [ID] from JSON [SOURCE]</code></li>
@@ -27,6 +27,21 @@
     <li><code>emit 3D event [TYPE] from selector [SELECTOR] with data [DATA]</code></li>
     <li><code>when 3D scene ready</code></li>
     <li><code>when event [TYPE] on selector [SELECTOR]</code></li>
+  </ul>
+
+  <h2>Animation blocks</h2>
+  <ul>
+    <li><code>create 3D animation clip [NAME] duration [DURATION]</code></li>
+    <li><code>add vector keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]</code></li>
+    <li><code>add quaternion keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]</code></li>
+    <li><code>add euler rotation keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES] unit [UNIT]</code></li>
+    <li><code>add position keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]</code></li>
+    <li><code>add scale keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]</code></li>
+    <li><code>add euler rotation keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z] unit [UNIT]</code></li>
+    <li><code>play 3D animation clip [CLIP] on selector [SELECTOR] loop [LOOP]</code></li>
+    <li><code>stop 3D animation clip [CLIP] on selector [SELECTOR]</code></li>
+    <li><code>pause 3D animation clip [CLIP] on selector [SELECTOR]</code></li>
+    <li><code>resume 3D animation clip [CLIP] on selector [SELECTOR]</code></li>
   </ul>
 
   <h2>Development</h2>

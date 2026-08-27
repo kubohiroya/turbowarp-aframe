@@ -92,6 +92,21 @@ runtime は hat polling 用の小さな event queue を持ちます。
 
 ブラウザ DOM element が存在する場合、`click`、`tap`、`pointerenter`、`pointerleave` は同じ queue に変換します。hat が指定した custom event type も既存 node と将来作成される node に listener を張ります。`emit 3D event` が dispatch する DOM `CustomEvent` は、自分自身を二重に queue へ積まないようにしています。
 
+## キーフレームアニメーション
+
+animation clip 定義はシーングラフとは別に保持します。clip は name、seconds 単位の duration、typed keyframe tracks を持ちます。初期対応する track type は次の通りです。
+
+- `.position` と `.scale` 用の `VectorKeyframeTrack`
+- `.quaternion` 用の `QuaternionKeyframeTrack`
+
+track の `times` と `values` は comma または whitespace 区切りの number list として受け取ります。Vector track は keyframe ごとに 3 値、Quaternion track は keyframe ごとに 4 値を必要とします。Euler rotation 補助ブロックは `degrees` または `radians` の x/y/z triples を受け取り、track 保存前に quaternion values へ変換します。
+
+single-keyframe helper block はブロック優先の authoring path です。`.position`、`.scale`、`.quaternion` の keyframe を 1 つずつ挿入し、time 順に並べ、同じ clip、path、time の keyframe は後から追加した値で置き換えます。comma-separated full-track block は、Three.js 形式の配列をすでに持っている advanced user 向けに残します。
+
+再生は Scratch sprite ではなく一致した node に紐づきます。browser DOM、A-Frame、`AFRAME.THREE` が利用可能な場合、`play 3D animation clip` は対象 node の root `object3D` ごとに `AnimationMixer` を作成し、clip action を開始し、scene 上の小さな A-Frame bridge component から active mixer を更新します。glTF bone、child object path、material property、blending、cross-fade control は初期実装の外に置きます。DOM のない test environment では、Three.js object を作らず registry と validation を検証できます。
+
+既存の `rotation` ブロックは A-Frame attribute を書くため degree-based のまま維持します。Quaternion animation は Three.js object state を使うため、A-Frame Euler attribute rotation とは別の機能として扱います。
+
 ## 当たり判定スコープ
 
 この初期コード slice では当たり判定は未実装です。最初の production model は次を想定します。

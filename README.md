@@ -14,6 +14,7 @@ It treats TurboWarp sprites and backdrops as places to run 3D scene logic, not a
 - Mutates local `position`, `rotation`, class, `data-*`, visibility, and arbitrary A-Frame component attributes.
 - Loads JSON templates and instantiates them with explicit instance ids.
 - Mounts the A-Frame host near the detected TurboWarp stage and queues scene-ready, DOM pointer/click, and selector-scoped custom events for hat blocks.
+- Defines and plays Three.js keyframe animation clips with vector and quaternion tracks.
 - Keeps AR and collision APIs documented as next-stage extension points while preserving a small initial implementation.
 
 ## Requirements and safety
@@ -231,6 +232,178 @@ Fires when a queued 3D event of the given type targets a node matching the selec
 | `TYPE` | String, default: `attack` |
 | `SELECTOR` | String, default: `.monster` |
 
+### `create 3D animation clip [NAME] duration [DURATION]`
+
+Creates or replaces a Three.js AnimationClip definition.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `createAnimationClip` |
+| `NAME` | String, default: `wave` |
+| `DURATION` | Number, default: `-1` |
+
+### `delete 3D animation clip [NAME]`
+
+Deletes a stored 3D animation clip definition and stops its active actions.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `deleteAnimationClip` |
+| `NAME` | String, default: `wave` |
+
+### `add vector keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]`
+
+Adds a Three.js VectorKeyframeTrack definition with x y z values.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `addVectorKeyframeTrack` |
+| `CLIP` | String, default: `move-up` |
+| `PATH` | String, default: `.position` |
+| `TIMES` | String, default: `0,0.5,1` |
+| `VALUES` | String, default: `0,1,-3, 0,1.5,-3, 0,1,-3` |
+
+### `add quaternion keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES]`
+
+Adds a Three.js QuaternionKeyframeTrack definition with x y z w values.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `addQuaternionKeyframeTrack` |
+| `CLIP` | String, default: `wave` |
+| `PATH` | String, default: `.quaternion` |
+| `TIMES` | String, default: `0,0.5,1` |
+| `VALUES` | String, default: `0,0,0,1, 0,0,0.389,0.921, 0,0,0,1` |
+
+### `add euler rotation keyframe track to clip [CLIP] path [PATH] times [TIMES] values [VALUES] unit [UNIT]`
+
+Adds a quaternion track converted from Euler x y z rotation values.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `addEulerRotationKeyframeTrack` |
+| `CLIP` | String, default: `wave` |
+| `PATH` | String, default: `.quaternion` |
+| `TIMES` | String, default: `0,0.25,0.5,0.75,1` |
+| `VALUES` | String, default: `0,0,0, 0,0,0.8, 0,0,0, 0,0,-0.8, 0,0,0` |
+| `UNIT` | String, default: `radians` |
+
+### `add position keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]`
+
+Adds or replaces one position keyframe on the clip.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `addPositionKeyframe` |
+| `CLIP` | String, default: `move-up` |
+| `TIME` | Number, default: `0` |
+| `X` | Number, default: `0` |
+| `Y` | Number, default: `1` |
+| `Z` | Number, default: `-3` |
+
+### `add scale keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z]`
+
+Adds or replaces one scale keyframe on the clip.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `addScaleKeyframe` |
+| `CLIP` | String, default: `pulse` |
+| `TIME` | Number, default: `0` |
+| `X` | Number, default: `1` |
+| `Y` | Number, default: `1` |
+| `Z` | Number, default: `1` |
+
+### `add euler rotation keyframe to clip [CLIP] at [TIME] x [X] y [Y] z [Z] unit [UNIT]`
+
+Adds or replaces one Euler rotation keyframe converted to quaternion values.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `addEulerRotationKeyframe` |
+| `CLIP` | String, default: `wave` |
+| `TIME` | Number, default: `0` |
+| `X` | Number, default: `0` |
+| `Y` | Number, default: `0` |
+| `Z` | Number, default: `0.8` |
+| `UNIT` | String, default: `radians` |
+
+### `play 3D animation clip [CLIP] on selector [SELECTOR] loop [LOOP]`
+
+Plays a stored 3D animation clip on every matching node.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `playAnimationClip` |
+| `CLIP` | String, default: `wave` |
+| `SELECTOR` | String, default: `#leftArm` |
+| `LOOP` | Boolean, default: `true` |
+
+### `stop 3D animation clip [CLIP] on selector [SELECTOR]`
+
+Stops a stored 3D animation clip on every matching node.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `stopAnimationClip` |
+| `CLIP` | String, default: `wave` |
+| `SELECTOR` | String, default: `#leftArm` |
+
+### `pause 3D animation clip [CLIP] on selector [SELECTOR]`
+
+Pauses a stored 3D animation clip on every matching node.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `pauseAnimationClip` |
+| `CLIP` | String, default: `wave` |
+| `SELECTOR` | String, default: `#leftArm` |
+
+### `resume 3D animation clip [CLIP] on selector [SELECTOR]`
+
+Resumes a paused 3D animation clip on every matching node.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `resumeAnimationClip` |
+| `CLIP` | String, default: `wave` |
+| `SELECTOR` | String, default: `#leftArm` |
+
+### `set 3D animation clip [CLIP] on selector [SELECTOR] time scale [SCALE]`
+
+Sets the playback speed for a stored 3D animation clip on every matching node.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `setAnimationTimeScale` |
+| `CLIP` | String, default: `wave` |
+| `SELECTOR` | String, default: `#leftArm` |
+| `SCALE` | Number, default: `1` |
+
+### `is 3D animation clip [CLIP] playing on selector [SELECTOR]?`
+
+Reports whether any matching node has the stored 3D animation clip playing.
+
+| Property | Value |
+|---|---|
+| Type | Boolean |
+| Opcode | `isAnimationClipPlaying` |
+| `CLIP` | String, default: `wave` |
+| `SELECTOR` | String, default: `#leftArm` |
+
 <!-- END GENERATED BLOCKS -->
 
 ## Scene model
@@ -246,6 +419,14 @@ Selectors intentionally support a small subset first:
 - `@event` or `event target` after an event hat runs
 
 When a selector matches multiple nodes, command blocks apply to all matches. Blocks that require one node, such as template instantiation parents or event emitters, use the first match in graph insertion order.
+
+## Keyframe animations
+
+Animation blocks create stored clip definitions and play them on matching node root `object3D` instances through `AFRAME.THREE.AnimationMixer` when A-Frame and Three.js are available. `VectorKeyframeTrack` supports `.position` and `.scale`; `QuaternionKeyframeTrack` supports `.quaternion`. glTF internals such as bones, child objects, and material properties are outside the initial scope.
+
+The CSV track blocks are low-level APIs that stay close to Three.js. Classroom and ordinary block projects should prefer the single-keyframe blocks: `add position keyframe...`, `add scale keyframe...`, and `add euler rotation keyframe...`. A keyframe with the same clip, path, and time replaces the earlier value.
+
+Existing `set selector [SELECTOR] rotation x [X] y [Y] z [Z]` uses A-Frame rotation attributes in degrees. Quaternion tracks operate on Three.js object state, so Euler helper input must declare `degrees` or `radians` and is converted to quaternion values before playback.
 
 ## Architecture
 

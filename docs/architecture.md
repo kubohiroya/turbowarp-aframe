@@ -92,6 +92,21 @@ The runtime stores a small event queue for hat polling:
 
 Browser `click`, `tap`, `pointerenter`, and `pointerleave` events are converted into the same queue when their target node matches the selector watched by a hat block. Custom event types requested by hats are also attached to existing and future nodes. Events emitted by `emit 3D event` dispatch a DOM `CustomEvent` without re-queuing themselves.
 
+## Keyframe Animations
+
+Animation clip definitions are stored separately from the scene graph. A clip has a name, duration in seconds, and typed keyframe tracks. The first supported track types are:
+
+- `VectorKeyframeTrack` for `.position` and `.scale`
+- `QuaternionKeyframeTrack` for `.quaternion`
+
+Track `times` and `values` are passed as comma- or whitespace-separated number lists. Vector tracks require three values per keyframe. Quaternion tracks require four values per keyframe. Euler rotation helper blocks accept x/y/z triples in `degrees` or `radians` and convert them into quaternion values before storing the track.
+
+Single-keyframe helper blocks provide the block-first authoring path. They insert one `.position`, `.scale`, or `.quaternion` keyframe at a time, keep keyframes sorted, and replace an existing keyframe when the clip, path, and time match. The comma-separated full-track blocks remain available for advanced users who already have Three.js-style arrays.
+
+Playback is attached to matching nodes, not Scratch sprites. When browser DOM, A-Frame, and `AFRAME.THREE` are available, `play 3D animation clip` creates an `AnimationMixer` for each target node root `object3D`, starts a clip action, and updates active mixers through a small A-Frame bridge component on the scene. glTF bones, child object paths, material properties, blending, and cross-fade controls are left outside the first implementation. In non-DOM test environments, the registry and validation behavior remain testable without constructing Three.js objects.
+
+The existing `rotation` block remains degree-based because it writes A-Frame attributes. Quaternion animation uses Three.js object state and should be documented as separate from A-Frame Euler attribute rotation.
+
 ## Collision Scope
 
 Collision detection is not implemented in this first code slice. The intended first production model is:
