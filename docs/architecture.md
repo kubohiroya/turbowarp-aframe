@@ -81,34 +81,6 @@ Templates are JSON objects with this shape:
 
 `create template [TEMPLATE] as [INSTANCE] under [PARENT]` replaces the template root id with the explicit instance id and prefixes descendant ids with that instance id. It also adds `data-template` and `data-instance` values to the root. Instance id collisions are rejected. Deleting a parent deletes its descendants.
 
-## YAML DSL
-
-Block-built graphs can be exported with `3D scene YAML` and restored with `load 3D scene YAML [SOURCE]`. The YAML DSL uses the same node shape as templates but wraps it in a scene document:
-
-```yaml
-formatVersion: 1
-options:
-  layer: above-stage
-  mode: 3d
-root:
-  attributes:
-    embedded: "true"
-    renderer: "alpha: true"
-  children:
-    - type: box
-      id: card
-      classes:
-        - monster
-      data:
-        zone: field
-      attributes:
-        position: 0 1 -3
-```
-
-The root node remains `#scene`; a root `id` in YAML is ignored for identity purposes. Child ids written in YAML are preserved. Missing child ids are generated deterministically from the node type and insertion position.
-
-The parsed YAML document is specified by `schemas/aframe-scene-yaml.schema.json`. The reusable node shape is specified by `schemas/aframe-template.schema.json`.
-
 ## Events
 
 The runtime stores a small event queue for hat polling:
@@ -142,7 +114,7 @@ Unsupported devices, camera denial, marker loss, jitter, and recognition failure
 
 ## Book 2 API Boundary
 
-Book 2 should teach a small block set: scene creation, template loading, instance creation, selector operations, YAML DSL import/export, events, future collision groups, and future AR anchor attachment. A-Frame and Three.js internals stay in developer documentation unless the lesson explicitly moves into an advanced section.
+Book 2 should teach a small block set: scene creation, template loading, instance creation, selector operations, events, future collision groups, and future AR anchor attachment. A-Frame and Three.js internals stay in developer documentation unless the lesson explicitly moves into an advanced section.
 
 ## Rollback
 

@@ -81,34 +81,6 @@ template は次の形の JSON object です。
 
 `create template [TEMPLATE] as [INSTANCE] under [PARENT]` は template root id を明示された instance id に置き換え、子孫 id には instance id prefix を付けます。また root に `data-template` と `data-instance` を追加します。instance id の衝突は error です。親 node を削除すると子孫も削除します。
 
-## YAML DSL
-
-ブロックで構築した graph は `3D scene YAML` で書き出し、`load 3D scene YAML [SOURCE]` で復元できます。YAML DSL は template と同じ node 形状を使い、scene document として包みます。
-
-```yaml
-formatVersion: 1
-options:
-  layer: above-stage
-  mode: 3d
-root:
-  attributes:
-    embedded: "true"
-    renderer: "alpha: true"
-  children:
-    - type: box
-      id: card
-      classes:
-        - monster
-      data:
-        zone: field
-      attributes:
-        position: 0 1 -3
-```
-
-root node の identity は常に `#scene` です。YAML の root に `id` があっても identity には使いません。子 node の id は YAML に書かれた値を保持します。id が省略された子 node は node type と挿入順から決定的に生成します。
-
-YAML を parse した scene document は `schemas/aframe-scene-yaml.schema.json` で定義します。再利用する node 形状は `schemas/aframe-template.schema.json` で定義します。
-
 ## イベント
 
 runtime は hat polling 用の小さな event queue を持ちます。
@@ -142,7 +114,7 @@ AR tracking は将来の feature flag 対象です。評価順は次を想定し
 
 ## Book 2 API 境界
 
-Book 2 では、scene 作成、template 読み込み、instance 作成、selector 操作、YAML DSL import/export、event、将来の collision group、将来の AR anchor attach までを小さな block set として扱います。A-Frame と Three.js の詳細は、発展課題または開発者向けドキュメントへ分離します。
+Book 2 では、scene 作成、template 読み込み、instance 作成、selector 操作、event、将来の collision group、将来の AR anchor attach までを小さな block set として扱います。A-Frame と Three.js の詳細は、発展課題または開発者向けドキュメントへ分離します。
 
 ## ロールバック
 

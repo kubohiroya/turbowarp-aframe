@@ -13,7 +13,6 @@ It treats TurboWarp sprites and backdrops as places to run 3D scene logic, not a
 - Selects nodes with a limited `#id`, `.class`, and `[data-key=value]` selector subset.
 - Mutates local `position`, `rotation`, class, `data-*`, visibility, and arbitrary A-Frame component attributes.
 - Loads JSON templates and instantiates them with explicit instance ids.
-- Exports block-built scene graphs as a YAML DSL and reloads the same YAML DSL as an editable scene graph.
 - Mounts the A-Frame host near the detected TurboWarp stage and queues scene-ready, DOM pointer/click, and selector-scoped custom events for hat blocks.
 - Keeps AR and collision APIs documented as next-stage extension points while preserving a small initial implementation.
 
@@ -181,25 +180,6 @@ Deletes every non-root node matching the selector and its descendants.
 | Opcode | `deleteSelector` |
 | `SELECTOR` | String, default: `#card` |
 
-### `load 3D scene YAML [SOURCE]`
-
-Replaces the current scene graph with a YAML DSL scene definition.
-
-| Property | Value |
-|---|---|
-| Type | Command |
-| Opcode | `loadSceneYaml` |
-| `SOURCE` | String, default: `formatVersion: 1\noptions:\n  layer: above-stage\n  mode: 3d\nroot:\n  children:\n    - type: box\n      id: card\n      class: monster\n      attributes:\n        position: 0 1 -3\n` |
-
-### `3D scene YAML`
-
-Exports the current scene graph as a YAML DSL string.
-
-| Property | Value |
-|---|---|
-| Type | Reporter |
-| Opcode | `sceneYaml` |
-
 ### `count selector [SELECTOR]`
 
 Returns the number of nodes matching a limited selector.
@@ -266,29 +246,6 @@ Selectors intentionally support a small subset first:
 - `@event` or `event target` after an event hat runs
 
 When a selector matches multiple nodes, command blocks apply to all matches. Blocks that require one node, such as template instantiation parents or event emitters, use the first match in graph insertion order.
-
-## YAML DSL
-
-`3D scene YAML` exports the current block-built graph. `load 3D scene YAML [SOURCE]` replaces the current graph with the same DSL shape, so scenes can move between block workflows and text workflows.
-
-```yaml
-formatVersion: 1
-options:
-  layer: above-stage
-  mode: 3d
-root:
-  children:
-    - type: box
-      id: card
-      class: monster
-      data:
-        zone: field
-      attributes:
-        position: 0 1 -3
-        material: "color: #4cffb0"
-```
-
-The parsed YAML structure is defined by [schemas/aframe-scene-yaml.schema.json](schemas/aframe-scene-yaml.schema.json). Reusable node/template shape is defined by [schemas/aframe-template.schema.json](schemas/aframe-template.schema.json).
 
 ## Architecture
 

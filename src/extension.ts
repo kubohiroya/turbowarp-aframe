@@ -1,6 +1,5 @@
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
-import {parse as parseYaml, stringify as stringifyYaml} from 'yaml';
 
 type BlockTypeName = 'COMMAND' | 'REPORTER' | 'HAT';
 type ArgumentTypeName = 'STRING' | 'NUMBER';
@@ -51,12 +50,6 @@ interface SceneOptions {
   mode: string;
 }
 
-interface SceneYamlDocument {
-  formatVersion: 1;
-  options?: Partial<SceneOptions>;
-  root: TemplateNode;
-}
-
 const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
 const ROOT_ID = 'scene';
 const DOM_EVENT_TYPES = ['click', 'tap', 'pointerenter', 'pointerleave'] as const;
@@ -69,8 +62,6 @@ const TEMPLATE_NODE_KEYS = new Set([
   'id',
   'type'
 ]);
-const SCENE_YAML_KEYS = new Set(['formatVersion', 'options', 'root']);
-const SCENE_OPTION_KEYS = new Set(['layer', 'mode']);
 
 export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private readonly nodes = new Map<string, SceneNode>();
@@ -203,38 +194,6 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     }
   }
 
-  public loadSceneYaml(args: {SOURCE: unknown}): void {
-    const document = this.parseSceneYaml(Scratch.Cast.toString(args.SOURCE));
-    this.preflightSceneYaml(document);
-    this.sceneOptions = {
-      layer: document.options?.layer ?? 'above-stage',
-      mode: document.options?.mode ?? '3d'
-    };
-    this.resetGraph();
-    this.rootElement = this.createSceneElement();
-    const root = this.requireNode(ROOT_ID);
-    root.element = this.rootElement;
-    this.applyTemplateToRoot(root, document.root);
-    this.applyNodeToElement(root);
-    for (const [index, child] of (document.root.children ?? []).entries()) {
-      const fallbackId = this.sceneNodeFallbackId(child, ROOT_ID, index);
-      this.addSceneNodeTree(child, ROOT_ID, fallbackId);
-    }
-    this.sceneReadyPending = true;
-    this.enqueueEvent({type: 'scene-ready', targetId: ROOT_ID, data: '{}'});
-  }
-
-  public sceneYaml(): string {
-    return stringifyYaml(
-      {
-        formatVersion: 1,
-        options: this.sceneOptions,
-        root: this.nodeToTemplate(this.requireNode(ROOT_ID))
-      },
-      {lineWidth: 0}
-    );
-  }
-
   public countSelector(args: {SELECTOR: unknown}): number {
     return this.matches(Scratch.Cast.toString(args.SELECTOR)).length;
   }
@@ -315,15 +274,6 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     for (const [index, child] of (template.children ?? []).entries()) {
       const childId = child.id ?? child.type ?? String(index + 1);
       this.addNodeTree(child, node.id, `${node.id}-${this.normalizeId(childId)}`);
-    }
-    return node;
-  }
-
-  private addSceneNodeTree(template: TemplateNode, parentId: string, fallbackId: string): SceneNode {
-    const node = this.addNode({...template, id: template.id ?? fallbackId}, parentId);
-    for (const [index, child] of (template.children ?? []).entries()) {
-      const childId = this.sceneNodeFallbackId(child, node.id, index);
-      this.addSceneNodeTree(child, node.id, childId);
     }
     return node;
   }
@@ -540,103 +490,6 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     const value: unknown = JSON.parse(source);
     this.validateTemplateNode(value, 'template');
     return value as TemplateNode;
-  }
-
-  private parseSceneYaml(source: string): SceneYamlDocument {
-    const value: unknown = parseYaml(source);
-    this.validateSceneYamlDocument(value);
-    return value;
-  }
-
-  private validateSceneYamlDocument(value: unknown): asserts value is SceneYamlDocument {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      throw new TypeError('A-Frame scene YAML must be an object.');
-    }
-    const document = value as Record<string, unknown>;
-    for (const key of Object.keys(document)) {
-      if (!SCENE_YAML_KEYS.has(key)) {
-        throw new TypeError(`A-Frame scene YAML ${key} is not supported.`);
-      }
-    }
-    if (document['formatVersion'] !== 1) {
-      throw new TypeError('A-Frame scene YAML formatVersion must be 1.');
-    }
-    if (document['options'] !== undefined) {
-      if (
-        typeof document['options'] !== 'object' ||
-        document['options'] === null ||
-        Array.isArray(document['options'])
-      ) {
-        throw new TypeError('A-Frame scene YAML options must be an object.');
-      }
-      const options = document['options'] as Record<string, unknown>;
-      for (const key of Object.keys(options)) {
-        if (!SCENE_OPTION_KEYS.has(key)) {
-          throw new TypeError(`A-Frame scene YAML options.${key} is not supported.`);
-        }
-      }
-      this.validateOptionalString(options['layer'], 'scene.options.layer');
-      this.validateOptionalString(options['mode'], 'scene.options.mode');
-    }
-    this.validateTemplateNode(document['root'], 'scene.root');
-  }
-
-  private preflightSceneYaml(document: SceneYamlDocument): void {
-    const ids = new Set<string>([ROOT_ID]);
-    for (const [index, child] of (document.root.children ?? []).entries()) {
-      this.collectSceneNodeIds(child, ROOT_ID, index, ids);
-    }
-  }
-
-  private collectSceneNodeIds(
-    template: TemplateNode,
-    parentId: string,
-    index: number,
-    ids: Set<string>
-  ): void {
-    const id = this.normalizeId(template.id ?? this.sceneNodeFallbackId(template, parentId, index));
-    if (id === ROOT_ID || ids.has(id)) {
-      throw new Error(`Duplicate A-Frame node id in scene YAML: ${id}`);
-    }
-    ids.add(id);
-    for (const [childIndex, child] of (template.children ?? []).entries()) {
-      this.collectSceneNodeIds(child, id, childIndex, ids);
-    }
-  }
-
-  private sceneNodeFallbackId(template: TemplateNode, parentId: string, index: number): string {
-    const type = this.normalizeId(template.type ?? 'node');
-    return `${parentId}-${type}-${index + 1}`;
-  }
-
-  private applyTemplateToRoot(root: SceneNode, template: TemplateNode): void {
-    root.classes = new Set(this.normalizeClasses(template));
-    root.data = new Map(this.normalizeRecord(template.data, this.normalizeDataKey.bind(this)));
-    root.attributes = new Map([
-      ['embedded', 'true'],
-      ['renderer', 'alpha: true'],
-      ...this.normalizeRecord(template.attributes, this.normalizeAttributeName.bind(this))
-    ]);
-  }
-
-  private nodeToTemplate(node: SceneNode): TemplateNode {
-    const template: TemplateNode = {
-      type: node.type,
-      id: node.id
-    };
-    if (node.classes.size > 0) {
-      template.classes = [...node.classes].sort();
-    }
-    if (node.data.size > 0) {
-      template.data = Object.fromEntries([...node.data.entries()].sort());
-    }
-    if (node.attributes.size > 0) {
-      template.attributes = Object.fromEntries([...node.attributes.entries()].sort());
-    }
-    if (node.children.length > 0) {
-      template.children = node.children.map((childId) => this.nodeToTemplate(this.requireNode(childId)));
-    }
-    return template;
   }
 
   private validateTemplateNode(value: unknown, path: string): asserts value is TemplateNode {
