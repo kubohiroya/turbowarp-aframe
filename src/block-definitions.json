@@ -1,0 +1,190 @@
+{
+  "extensionName": "TurboWarp-A-Frame",
+  "blocks": [
+    {
+      "opcode": "createScene",
+      "blockType": "COMMAND",
+      "text": "create 3D scene with layer [LAYER] mode [MODE]",
+      "description": "Initializes the A-Frame scene host and emits the scene ready event.",
+      "arguments": {
+        "LAYER": {"type": "STRING", "defaultValue": "above-stage"},
+        "MODE": {"type": "STRING", "defaultValue": "3d"}
+      }
+    },
+    {
+      "opcode": "loadTemplate",
+      "blockType": "COMMAND",
+      "text": "load template [ID] from JSON [SOURCE]",
+      "description": "Stores a declarative scene graph template for later instantiation.",
+      "arguments": {
+        "ID": {"type": "STRING", "defaultValue": "monster"},
+        "SOURCE": {
+          "type": "STRING",
+          "defaultValue": "{\"type\":\"box\",\"id\":\"body\",\"attributes\":{\"color\":\"#4cffb0\"}}"
+        }
+      }
+    },
+    {
+      "opcode": "createNode",
+      "blockType": "COMMAND",
+      "text": "create [TYPE] node id [ID] under [PARENT]",
+      "description": "Creates a primitive, model, text, light, camera, or group node.",
+      "arguments": {
+        "TYPE": {"type": "STRING", "defaultValue": "box"},
+        "ID": {"type": "STRING", "defaultValue": "card"},
+        "PARENT": {"type": "STRING", "defaultValue": "#scene"}
+      }
+    },
+    {
+      "opcode": "createFromTemplate",
+      "blockType": "COMMAND",
+      "text": "create template [TEMPLATE] as [INSTANCE] under [PARENT]",
+      "description": "Instantiates a stored template under the first node matching the parent selector.",
+      "arguments": {
+        "TEMPLATE": {"type": "STRING", "defaultValue": "monster"},
+        "INSTANCE": {"type": "STRING", "defaultValue": "monster-1"},
+        "PARENT": {"type": "STRING", "defaultValue": "#scene"}
+      }
+    },
+    {
+      "opcode": "setPosition",
+      "blockType": "COMMAND",
+      "text": "set selector [SELECTOR] position x [X] y [Y] z [Z]",
+      "description": "Sets local position on every node matching the selector.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"},
+        "X": {"type": "NUMBER", "defaultValue": 0},
+        "Y": {"type": "NUMBER", "defaultValue": 1},
+        "Z": {"type": "NUMBER", "defaultValue": -3}
+      }
+    },
+    {
+      "opcode": "moveBy",
+      "blockType": "COMMAND",
+      "text": "move selector [SELECTOR] by x [X] y [Y] z [Z]",
+      "description": "Offsets local position on every node matching the selector.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"},
+        "X": {"type": "NUMBER", "defaultValue": 0},
+        "Y": {"type": "NUMBER", "defaultValue": 0},
+        "Z": {"type": "NUMBER", "defaultValue": 1}
+      }
+    },
+    {
+      "opcode": "setRotation",
+      "blockType": "COMMAND",
+      "text": "set selector [SELECTOR] rotation x [X] y [Y] z [Z]",
+      "description": "Sets local Euler rotation in degrees on every node matching the selector.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"},
+        "X": {"type": "NUMBER", "defaultValue": 0},
+        "Y": {"type": "NUMBER", "defaultValue": 45},
+        "Z": {"type": "NUMBER", "defaultValue": 0}
+      }
+    },
+    {
+      "opcode": "addClass",
+      "blockType": "COMMAND",
+      "text": "add class [CLASS] to selector [SELECTOR]",
+      "description": "Adds a CSS-style class to every node matching the selector.",
+      "arguments": {
+        "CLASS": {"type": "STRING", "defaultValue": "monster"},
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"}
+      }
+    },
+    {
+      "opcode": "setData",
+      "blockType": "COMMAND",
+      "text": "set selector [SELECTOR] data [KEY] to [VALUE]",
+      "description": "Sets a data-* value on every node matching the selector.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"},
+        "KEY": {"type": "STRING", "defaultValue": "zone"},
+        "VALUE": {"type": "STRING", "defaultValue": "field"}
+      }
+    },
+    {
+      "opcode": "setAttribute",
+      "blockType": "COMMAND",
+      "text": "set selector [SELECTOR] attribute [NAME] to [VALUE]",
+      "description": "Sets an A-Frame component or HTML attribute on every node matching the selector.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"},
+        "NAME": {"type": "STRING", "defaultValue": "visible"},
+        "VALUE": {"type": "STRING", "defaultValue": "true"}
+      }
+    },
+    {
+      "opcode": "deleteSelector",
+      "blockType": "COMMAND",
+      "text": "delete selector [SELECTOR]",
+      "description": "Deletes every non-root node matching the selector and its descendants.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"}
+      }
+    },
+    {
+      "opcode": "loadSceneYaml",
+      "blockType": "COMMAND",
+      "text": "load 3D scene YAML [SOURCE]",
+      "description": "Replaces the current scene graph with a YAML DSL scene definition.",
+      "arguments": {
+        "SOURCE": {
+          "type": "STRING",
+          "defaultValue": "formatVersion: 1\noptions:\n  layer: above-stage\n  mode: 3d\nroot:\n  children:\n    - type: box\n      id: card\n      class: monster\n      attributes:\n        position: 0 1 -3\n"
+        }
+      }
+    },
+    {
+      "opcode": "sceneYaml",
+      "blockType": "REPORTER",
+      "text": "3D scene YAML",
+      "description": "Exports the current scene graph as a YAML DSL string.",
+      "arguments": {}
+    },
+    {
+      "opcode": "countSelector",
+      "blockType": "REPORTER",
+      "text": "count selector [SELECTOR]",
+      "description": "Returns the number of nodes matching a limited selector.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": ".monster"}
+      }
+    },
+    {
+      "opcode": "eventTargetId",
+      "blockType": "REPORTER",
+      "text": "event target id",
+      "description": "Returns the id of the most recently handled 3D event target.",
+      "arguments": {}
+    },
+    {
+      "opcode": "emitEvent",
+      "blockType": "COMMAND",
+      "text": "emit 3D event [TYPE] from selector [SELECTOR] with data [DATA]",
+      "description": "Queues and dispatches a 3D event from the first node matching the selector.",
+      "arguments": {
+        "TYPE": {"type": "STRING", "defaultValue": "attack"},
+        "SELECTOR": {"type": "STRING", "defaultValue": "#card"},
+        "DATA": {"type": "STRING", "defaultValue": "{}"}
+      }
+    },
+    {
+      "opcode": "whenSceneReady",
+      "blockType": "HAT",
+      "text": "when 3D scene ready",
+      "description": "Fires once after create 3D scene initializes the scene host.",
+      "arguments": {}
+    },
+    {
+      "opcode": "whenEventOnSelector",
+      "blockType": "HAT",
+      "text": "when event [TYPE] on selector [SELECTOR]",
+      "description": "Fires when a queued 3D event of the given type targets a node matching the selector.",
+      "arguments": {
+        "TYPE": {"type": "STRING", "defaultValue": "attack"},
+        "SELECTOR": {"type": "STRING", "defaultValue": ".monster"}
+      }
+    }
+  ]
+}

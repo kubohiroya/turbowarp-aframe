@@ -1,0 +1,264 @@
+{
+  "formatVersion": 1,
+  "id": "turbowarpaframe",
+  "blocks": [
+    {
+      "opcode": "addClass",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "CLASS",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "countSelector",
+      "blockType": "REPORTER",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "createFromTemplate",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "INSTANCE",
+          "type": "STRING"
+        },
+        {
+          "id": "PARENT",
+          "type": "STRING"
+        },
+        {
+          "id": "TEMPLATE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "createNode",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "ID",
+          "type": "STRING"
+        },
+        {
+          "id": "PARENT",
+          "type": "STRING"
+        },
+        {
+          "id": "TYPE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "createScene",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "LAYER",
+          "type": "STRING"
+        },
+        {
+          "id": "MODE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "deleteSelector",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "emitEvent",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "DATA",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "TYPE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "eventTargetId",
+      "blockType": "REPORTER",
+      "arguments": []
+    },
+    {
+      "opcode": "loadSceneYaml",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SOURCE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "loadTemplate",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "ID",
+          "type": "STRING"
+        },
+        {
+          "id": "SOURCE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "moveBy",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "sceneYaml",
+      "blockType": "REPORTER",
+      "arguments": []
+    },
+    {
+      "opcode": "setAttribute",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "NAME",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "VALUE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "setData",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "KEY",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "VALUE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "setPosition",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "setRotation",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "opcode": "whenEventOnSelector",
+      "blockType": "HAT",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "TYPE",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "whenSceneReady",
+      "blockType": "HAT",
+      "arguments": []
+    }
+  ],
+  "menus": []
+}
