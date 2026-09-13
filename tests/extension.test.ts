@@ -1,5 +1,10 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TurboWarpAFrameExtension} from '../src/extension.js';
+import {
+  runtimeCapabilityKey,
+  runtimeCapabilityVersion,
+  type AFrameRuntimeCapabilityV1
+} from '../src/runtime-capability.js';
 
 class FakeElement {
   public readonly tagName: string;
@@ -87,6 +92,7 @@ class FakeDocument {
 
 beforeEach(() => {
   vi.stubGlobal('Scratch', {
+    vm: {runtime: {}},
     BlockType: {BOOLEAN: 'boolean', COMMAND: 'command', HAT: 'hat', REPORTER: 'reporter'},
     ArgumentType: {NUMBER: 'number', STRING: 'string'},
     Cast: {
@@ -112,6 +118,53 @@ afterEach(() => {
 });
 
 describe('TurboWarpAFrameExtension', () => {
+  it('publishes a versioned scene capability that shares block behavior', () => {
+    const extension = new TurboWarpAFrameExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+
+    expect(capability.version).toBe(runtimeCapabilityVersion);
+    expect(capability.requireVersion(1)).toBe(capability);
+    capability.loadTemplate(
+      'actor',
+      JSON.stringify({type: 'group', class: 'actor', children: [{type: 'sphere', id: 'head'}]})
+    );
+    capability.createFromTemplate('actor', 'actor-1', '#scene');
+    capability.setPosition('#actor-1', 1, 2, -3);
+    capability.setRotation('#actor-1', 10, 20, 30);
+    capability.emitEvent('pose-updated', '#actor-1', '{"frame":1}');
+
+    expect(capability.countSelector('.actor')).toBe(1);
+    expect(extension.whenEventOnSelector({TYPE: 'pose-updated', SELECTOR: '#actor-1'})).toBe(true);
+    expect(extension.snapshot()).toMatchObject({
+      nodes: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'actor-1',
+          attributes: {position: '1 2 -3', rotation: '10 20 30'}
+        })
+      ])
+    });
+    capability.deleteSelector('#actor-1');
+    expect(extension.countSelector({SELECTOR: '.actor'})).toBe(0);
+  });
+
+  it('rejects unsupported capability versions and calls after dispose', () => {
+    const extension = new TurboWarpAFrameExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+
+    expect(() => capability.requireVersion(2)).toThrow(
+      'Unsupported A-Frame runtime capability version'
+    );
+
+    extension.dispose();
+
+    expect(runtime[runtimeCapabilityKey]).toBeUndefined();
+    expect(() => capability.countSelector('*')).toThrow('A-Frame runtime capability is disposed.');
+    expect(() => capability.requireVersion(1)).toThrow('A-Frame runtime capability is disposed.');
+    expect(() => extension.dispose()).not.toThrow();
+  });
+
   it('publishes TurboWarp-A-Frame metadata and implemented blocks', () => {
     const info = new TurboWarpAFrameExtension().getInfo() as {
       id: string;

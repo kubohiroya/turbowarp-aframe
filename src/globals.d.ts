@@ -20,6 +20,9 @@ interface ScratchApi {
     toBoolean(value: unknown): boolean;
   };
   translate: ScratchTranslate;
+  vm?: {
+    runtime?: Record<string, unknown>;
+  };
 }
 
 declare const Scratch: ScratchApi;
