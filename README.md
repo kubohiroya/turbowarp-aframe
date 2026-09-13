@@ -26,6 +26,26 @@ It treats TurboWarp sprites and backdrops as places to run 3D scene logic, not a
 
 Unsandboxed extensions can manipulate the containing page. Load only generated extension bundles that you trust.
 
+## Runtime scene capability
+
+Composite unsandboxed extensions can use the same scene operations as the blocks through the versioned runtime capability. Read `Scratch.vm.runtime.turbowarpAFrameCapability`, call `requireVersion(1)`, and then use these synchronous methods:
+
+```ts
+interface AFrameRuntimeCapabilityV1 {
+  readonly version: 1;
+  requireVersion(version: number): AFrameRuntimeCapabilityV1;
+  loadTemplate(id: string, source: string): void;
+  createFromTemplate(template: string, instance: string, parent: string): void;
+  setPosition(selector: string, x: number, y: number, z: number): void;
+  setRotation(selector: string, x: number, y: number, z: number): void;
+  emitEvent(type: string, selector: string, data: string): void;
+  deleteSelector(selector: string): void;
+  countSelector(selector: string): number;
+}
+```
+
+The capability deliberately exposes declarative templates and selectors, not private DOM nodes, A-Frame objects, Three.js objects, or glTF internals. Unsupported versions fail closed. A retained capability reference also rejects every operation after the extension is disposed.
+
 ## Install
 
 ```bash

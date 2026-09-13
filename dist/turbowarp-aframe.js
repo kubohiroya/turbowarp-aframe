@@ -588,6 +588,46 @@
   		}
   	]
   };
+  var runtimeCapabilityKey = "turbowarpAFrameCapability";
+  function createRuntimeCapability(scene, assertActive) {
+  	const capability = {
+  		version: 1,
+  		requireVersion(version) {
+  			assertActive();
+  			if (version !== 1) throw new Error(`Unsupported A-Frame runtime capability version: ${version}; supported version is 1.`);
+  			return capability;
+  		},
+  		loadTemplate(id, source) {
+  			assertActive();
+  			scene.loadTemplate(id, source);
+  		},
+  		createFromTemplate(template, instance, parent) {
+  			assertActive();
+  			scene.createFromTemplate(template, instance, parent);
+  		},
+  		setPosition(selector, x, y, z) {
+  			assertActive();
+  			scene.setPosition(selector, x, y, z);
+  		},
+  		setRotation(selector, x, y, z) {
+  			assertActive();
+  			scene.setRotation(selector, x, y, z);
+  		},
+  		emitEvent(type, selector, data) {
+  			assertActive();
+  			scene.emitEvent(type, selector, data);
+  		},
+  		deleteSelector(selector) {
+  			assertActive();
+  			scene.deleteSelector(selector);
+  		},
+  		countSelector(selector) {
+  			assertActive();
+  			return scene.countSelector(selector);
+  		}
+  	};
+  	return Object.freeze(capability);
+  }
   //#endregion
   //#region src/extension.ts
   var blockDefinitions = block_definitions_default.blocks;
@@ -623,7 +663,40 @@
   		this.rootElement = null;
   		this.sceneReadyPending = false;
   		this.lastEvent = null;
+  		this.disposed = false;
   		this.resetGraph();
+  		this.runtimeCapability = createRuntimeCapability({
+  			loadTemplate: (id, source) => this.loadTemplate({
+  				ID: id,
+  				SOURCE: source
+  			}),
+  			createFromTemplate: (template, instance, parent) => this.createFromTemplate({
+  				TEMPLATE: template,
+  				INSTANCE: instance,
+  				PARENT: parent
+  			}),
+  			setPosition: (selector, x, y, z) => this.setPosition({
+  				SELECTOR: selector,
+  				X: x,
+  				Y: y,
+  				Z: z
+  			}),
+  			setRotation: (selector, x, y, z) => this.setRotation({
+  				SELECTOR: selector,
+  				X: x,
+  				Y: y,
+  				Z: z
+  			}),
+  			emitEvent: (type, selector, data) => this.emitEvent({
+  				TYPE: type,
+  				SELECTOR: selector,
+  				DATA: data
+  			}),
+  			deleteSelector: (selector) => this.deleteSelector({ SELECTOR: selector }),
+  			countSelector: (selector) => this.countSelector({ SELECTOR: selector })
+  		}, () => this.assertActive());
+  		const runtime = Scratch.vm?.runtime;
+  		if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
   	}
   	getInfo() {
   		return {
@@ -910,6 +983,18 @@
   				attributes: Object.fromEntries([...node.attributes.entries()].sort())
   			}))
   		};
+  	}
+  	dispose() {
+  		if (this.disposed) return;
+  		this.disposed = true;
+  		for (const key of [...this.animationPlaybacks.keys()]) this.stopPlayback(key, true);
+  		this.rootElement?.parentElement?.remove();
+  		this.rootElement = null;
+  		const runtime = Scratch.vm?.runtime;
+  		if (runtime?.["turbowarpAFrameCapability"] === this.runtimeCapability) delete runtime[runtimeCapabilityKey];
+  	}
+  	assertActive() {
+  		if (this.disposed) throw new Error("A-Frame runtime capability is disposed.");
   	}
   	resetGraph() {
   		for (const key of [...this.animationPlaybacks.keys()]) this.stopPlayback(key, true);

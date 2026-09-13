@@ -22,6 +22,14 @@ src/config.ts + src/block-definitions.json
 
 The generated JavaScript bundle is an unsandboxed TurboWarp extension. The manifest records the block API contract for compatibility checks.
 
+## Versioned Runtime Capability
+
+The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 1 is a narrow typed port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`.
+
+Each port method delegates to the corresponding block handler. Consequently, block calls and composite-extension calls share casting, validation, selector matching, event queuing, and the extension-owned scene state. The port never exposes DOM elements, A-Frame/Three.js objects, or glTF internals.
+
+Consumers must call `requireVersion(1)` before use. An unsupported version throws instead of attempting compatibility fallback. `dispose()` removes the capability from the runtime, stops active animation playbacks, removes the scene host, and permanently invalidates references that a consumer retained before disposal. Repeated disposal is safe.
+
 ## Scene initialization
 
 `createScene` creates a root `#scene` node and, when a browser DOM exists, a `#tw-aframe-root > a-scene` host. The host is mounted inside the first detected TurboWarp stage wrapper or canvas parent, falling back to `document.body` only when no stage-like element is found.

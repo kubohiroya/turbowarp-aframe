@@ -1,5 +1,10 @@
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
+import {
+  createRuntimeCapability,
+  runtimeCapabilityKey,
+  type AFrameRuntimeCapabilityV1
+} from './runtime-capability.js';
 
 type BlockTypeName = 'COMMAND' | 'REPORTER' | 'HAT' | 'BOOLEAN';
 type ArgumentTypeName = 'STRING' | 'NUMBER' | 'BOOLEAN';
@@ -130,9 +135,29 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private rootElement: Element | null = null;
   private sceneReadyPending = false;
   private lastEvent: SceneEvent | null = null;
+  private readonly runtimeCapability: AFrameRuntimeCapabilityV1;
+  private disposed = false;
 
   public constructor() {
     this.resetGraph();
+    this.runtimeCapability = createRuntimeCapability(
+      {
+        loadTemplate: (id, source) => this.loadTemplate({ID: id, SOURCE: source}),
+        createFromTemplate: (template, instance, parent) =>
+          this.createFromTemplate({TEMPLATE: template, INSTANCE: instance, PARENT: parent}),
+        setPosition: (selector, x, y, z) =>
+          this.setPosition({SELECTOR: selector, X: x, Y: y, Z: z}),
+        setRotation: (selector, x, y, z) =>
+          this.setRotation({SELECTOR: selector, X: x, Y: y, Z: z}),
+        emitEvent: (type, selector, data) =>
+          this.emitEvent({TYPE: type, SELECTOR: selector, DATA: data}),
+        deleteSelector: (selector) => this.deleteSelector({SELECTOR: selector}),
+        countSelector: (selector) => this.countSelector({SELECTOR: selector})
+      },
+      () => this.assertActive()
+    );
+    const runtime = Scratch.vm?.runtime;
+    if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
   }
 
   public getInfo(): Record<string, unknown> {
@@ -512,6 +537,26 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
         attributes: Object.fromEntries([...node.attributes.entries()].sort())
       }))
     };
+  }
+
+  public dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    for (const key of [...this.animationPlaybacks.keys()]) {
+      this.stopPlayback(key, true);
+    }
+    this.rootElement?.parentElement?.remove();
+    this.rootElement = null;
+    const runtime = Scratch.vm?.runtime;
+    if (runtime?.[runtimeCapabilityKey] === this.runtimeCapability) {
+      delete runtime[runtimeCapabilityKey];
+    }
+  }
+
+  private assertActive(): void {
+    if (this.disposed) {
+      throw new Error('A-Frame runtime capability is disposed.');
+    }
   }
 
   private resetGraph(): void {

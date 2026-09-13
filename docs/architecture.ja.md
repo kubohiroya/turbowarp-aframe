@@ -22,6 +22,14 @@ src/config.ts + src/block-definitions.json
 
 生成される JavaScript は unsandboxed TurboWarp 拡張です。manifest は block API contract として互換性確認に使います。
 
+## version付きruntime capability
+
+機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 1は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`だけを持つ狭い型付きportです。
+
+各port methodは対応するblock handlerへ委譲します。そのため、block呼び出しと複合機能拡張からの呼び出しは、cast、validation、selector matching、event queue、機能拡張所有のscene stateを共有します。portはDOM element、A-Frame／Three.js object、glTF内部実装を公開しません。
+
+consumerは利用前に`requireVersion(1)`を呼ぶ必要があります。未対応versionは互換fallbackを試さず例外になります。`dispose()`はruntimeからcapabilityを削除し、実行中のanimation playbackを停止し、scene hostを除去して、dispose前にconsumerが保持した参照も恒久的に無効化します。disposeの反復呼び出しは安全です。
+
 ## シーン初期化
 
 `createScene` は root の `#scene` ノードを作り、ブラウザ DOM がある場合は `#tw-aframe-root > a-scene` を作成します。host は最初に検出できた TurboWarp stage wrapper または canvas の親へ mount し、stage らしい要素が見つからない場合だけ `document.body` に fallback します。

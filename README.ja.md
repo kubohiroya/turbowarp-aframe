@@ -26,6 +26,26 @@ Scratch のスプライトや背景を 3D オブジェクトとして扱うの�
 
 unsandboxed 拡張はページ DOM を操作できます。信頼できる生成済み bundle だけを読み込んでください。
 
+## runtime scene capability
+
+複合的なunsandboxed機能拡張は、version付きruntime capabilityを通じてブロックと同じscene操作を利用できます。`Scratch.vm.runtime.turbowarpAFrameCapability`を取得し、最初に`requireVersion(1)`を呼んでから、次の同期メソッドを利用します。
+
+```ts
+interface AFrameRuntimeCapabilityV1 {
+  readonly version: 1;
+  requireVersion(version: number): AFrameRuntimeCapabilityV1;
+  loadTemplate(id: string, source: string): void;
+  createFromTemplate(template: string, instance: string, parent: string): void;
+  setPosition(selector: string, x: number, y: number, z: number): void;
+  setRotation(selector: string, x: number, y: number, z: number): void;
+  emitEvent(type: string, selector: string, data: string): void;
+  deleteSelector(selector: string): void;
+  countSelector(selector: string): number;
+}
+```
+
+このcapabilityが公開するのは宣言的templateとselectorだけです。private DOM node、A-Frame object、Three.js object、glTF内部実装は公開しません。未対応versionはfail closedし、機能拡張のdispose後に保持されたcapabilityを呼び出した場合も、すべて明示的に拒否します。
+
 ## インストール
 
 ```bash
