@@ -72,7 +72,7 @@ Load `dist/turbowarp-aframe.js` as an unsandboxed custom extension in TurboWarp.
 For package-based reuse, pin the version:
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.4.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.5.0
 ```
 
 ## Block reference
