@@ -424,6 +424,51 @@ Reports whether any matching node has the stored 3D animation clip playing.
 | `CLIP` | String, default: `wave` |
 | `SELECTOR` | String, default: `#leftArm` |
 
+### `load VRM [URL] onto [SELECTOR]`
+
+Loads a VRM avatar with three-vrm on the A-Frame Three.js and attaches it to the first matching node. The block waits until the model is ready.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `loadVrm` |
+| `URL` | String, default: `avatar.vrm` |
+| `SELECTOR` | String, default: `#avatar` |
+
+### `set VRM [SELECTOR] bone [BONE] rotation x [X] y [Y] z [Z]`
+
+Sets the Euler rotation in degrees of a normalized VRM humanoid bone, relative to the T-pose, on every matching node whose VRM is ready.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `setVrmBoneRotation` |
+| `SELECTOR` | String, default: `#avatar` |
+| `BONE` | String, default: `leftUpperArm` |
+| `X` | Number, default: `0` |
+| `Y` | Number, default: `0` |
+| `Z` | Number, default: `-60` |
+
+### `VRM [SELECTOR] humanoid bones`
+
+Returns the humanoid bone names of the first matching node's VRM as a JSON array.
+
+| Property | Value |
+|---|---|
+| Type | Reporter |
+| Opcode | `vrmBoneNames` |
+| `SELECTOR` | String, default: `#avatar` |
+
+### `VRM [SELECTOR] state`
+
+Returns none, loading, ready, or error with its reason for the first matching node.
+
+| Property | Value |
+|---|---|
+| Type | Reporter |
+| Opcode | `vrmState` |
+| `SELECTOR` | String, default: `#avatar` |
+
 <!-- END GENERATED BLOCKS -->
 
 ## Scene model

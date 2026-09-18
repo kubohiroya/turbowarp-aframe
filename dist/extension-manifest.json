@@ -314,6 +314,20 @@
       ]
     },
     {
+      "opcode": "loadVrm",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "URL",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
       "opcode": "moveBy",
       "blockType": "COMMAND",
       "arguments": [
@@ -480,6 +494,32 @@
       ]
     },
     {
+      "opcode": "setVrmBoneRotation",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "BONE",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "X",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Y",
+          "type": "NUMBER"
+        },
+        {
+          "id": "Z",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
       "opcode": "stopAnimationClip",
       "blockType": "COMMAND",
       "arguments": [
@@ -487,6 +527,26 @@
           "id": "CLIP",
           "type": "STRING"
         },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "vrmBoneNames",
+      "blockType": "REPORTER",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "vrmState",
+      "blockType": "REPORTER",
+      "arguments": [
         {
           "id": "SELECTOR",
           "type": "STRING"
