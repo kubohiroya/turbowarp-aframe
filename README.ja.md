@@ -70,7 +70,7 @@ TurboWarp では `dist/turbowarp-aframe.js` を unsandboxed custom extension と
 package として参照する場合は version を固定します。
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.3.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.4.0
 ```
 
 ## ブロック概要
