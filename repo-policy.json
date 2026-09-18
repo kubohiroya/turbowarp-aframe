@@ -12,17 +12,19 @@
     "minimum": "22"
   },
   "packageManager": "pnpm",
-  "requiredFiles": ["README.md", "README.ja.md", "LICENSE"],
+  "requiredFiles": ["README.md", "README.ja.md", "LICENSE", "THIRD_PARTY_NOTICES.md"],
   "exceptions": {
     "upstreamFork": false,
     "mixedContentLicenses": false,
     "legacyPackageName": false,
-    "thirdPartyBundle": false
+    "thirdPartyBundle": true
   },
   "migrationChecklist": [
     "Keep package metadata aligned with the turbowarp-aframe repository.",
     "Keep LICENSE as the full Mozilla Public License 2.0 text unless policy records an exception.",
     "Keep README.md as the canonical English entrypoint and README.ja.md for Japanese content.",
-    "Run pnpm run check before publishing generated artifacts."
+    "Run pnpm run check before publishing generated artifacts.",
+    "Keep the bundled @pixiv/three-vrm (MIT) listed in THIRD_PARTY_NOTICES.md with its license banners in the distributed bundle; this is the recorded thirdPartyBundle exception.",
+    "Load A-Frame 1.8.0 from jsDelivr pinned by version and subresource integrity, and never bundle it."
   ]
 }
