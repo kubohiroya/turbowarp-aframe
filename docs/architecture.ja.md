@@ -32,6 +32,8 @@ consumerは利用前に`requireVersion(2)`を呼ぶ必要があります。1を�
 
 ## シーン初期化
 
+`createScene`はsceneを作る前に、ページにA-Frame 1.8.0があることを確かめます。なければ`https://cdn.jsdelivr.net/npm/aframe@1.8.0/dist/aframe-v1.8.0.min.js`のscriptを、SHA-384のsubresource integrityと`crossorigin="anonymous"`付きで追加して待ちます。CDN上のファイルが変わっていれば拒否され、blockはA-Frameの準備ができてから完了します。同時に作られたsceneは1回の読み込みを共有し、失敗またはtimeout（30秒）した読み込みはscriptを取り除いて、次の呼び出しで再試行できるようにします。ページにA-Frame 1.8.0がすでにあれば何も読み込まず、自前のコピーを配信するオフライン会場でも動きます。ほかのversionがあれば拒否します。2つ目のA-Frameは並べて動かせず、three-vrmは1.8.0のThree.jsでしか確かめていないためです。A-Frameはbundleしません。
+
 `createScene` は root の `#scene` ノードを作り、ブラウザ DOM がある場合は `#tw-aframe-root > a-scene` を作成します。host は最初に検出できた TurboWarp stage wrapper または canvas の親へ mount し、stage らしい要素が見つからない場合だけ `document.body` に fallback します。
 
 初期 layer は文字列です。Book/API 側で語彙を調整しても block shape を変えずに済むようにしています。

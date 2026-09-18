@@ -22,7 +22,7 @@ Scratch のスプライトや背景を 3D オブジェクトとして扱うの�
 - Node.js 22 以上
 - Corepack 経由の pnpm
 - TurboWarp の unsandboxed extension support
-- ブラウザ利用時は、生成済み拡張を使うページまたはプロジェクト環境で A-Frame を読み込むこと
+- jsDelivrへ接続できること。`create 3D scene`はそこからA-Frame 1.8.0を、versionとsubresource integrityで固定して読み込みます。自前のコピーを配信するオフライン会場のように、ページにA-Frame 1.8.0がすでにあれば何も読み込まず、ほかのversionがあれば拒否します
 
 unsandboxed 拡張はページ DOM を操作できます。信頼できる生成済み bundle だけを読み込んでください。
 
@@ -155,3 +155,5 @@ pnpm run check
 ## ライセンス
 
 SPDX-License-Identifier: MPL-2.0
+
+bundleはMIT Licenseの`@pixiv/three-vrm`を含みます。[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)を参照してください。

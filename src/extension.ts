@@ -6,6 +6,7 @@ import {
   type AFrameRuntimeCapabilityV2,
   type AFrameVrmStatus
 } from './runtime-capability.js';
+import {ensureAFrame} from './aframe-loader.js';
 import {VrmAvatars, type VrmThreeApi} from './vrm.js';
 
 type BlockTypeName = 'COMMAND' | 'REPORTER' | 'HAT' | 'BOOLEAN';
@@ -183,7 +184,8 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     };
   }
 
-  public createScene(args: {LAYER: unknown; MODE: unknown}): void {
+  public async createScene(args: {LAYER: unknown; MODE: unknown}): Promise<void> {
+    await ensureAFrame();
     this.sceneOptions = {
       layer: Scratch.Cast.toString(args.LAYER) || 'above-stage',
       mode: Scratch.Cast.toString(args.MODE) || '3d'

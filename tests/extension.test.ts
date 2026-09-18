@@ -204,10 +204,10 @@ describe('TurboWarpAFrameExtension', () => {
     expect(info.blocks.map((block) => block.opcode)).toContain('whenEventOnSelector');
   });
 
-  it('creates a scene and fires scene ready once', () => {
+  it('creates a scene and fires scene ready once', async () => {
     const extension = new TurboWarpAFrameExtension();
 
-    extension.createScene({LAYER: 'camera-under-3d', MODE: 'ar-fallback'});
+    await extension.createScene({LAYER: 'camera-under-3d', MODE: 'ar-fallback'});
 
     expect(extension.whenSceneReady()).toBe(true);
     expect(extension.eventTargetId()).toBe('scene');
@@ -217,9 +217,9 @@ describe('TurboWarpAFrameExtension', () => {
     });
   });
 
-  it('creates and mutates selected scene graph nodes', () => {
+  it('creates and mutates selected scene graph nodes', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'card', PARENT: '#scene'});
     extension.addClass({CLASS: 'monster', SELECTOR: '#card'});
     extension.setData({SELECTOR: '#card', KEY: 'zone', VALUE: 'field'});
@@ -248,9 +248,9 @@ describe('TurboWarpAFrameExtension', () => {
     });
   });
 
-  it('instantiates templates and deletes subtrees', () => {
+  it('instantiates templates and deletes subtrees', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.loadTemplate({
       ID: 'monster',
       SOURCE: JSON.stringify({
@@ -272,9 +272,9 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.countSelector({SELECTOR: '.part'})).toBe(1);
   });
 
-  it('queues selector-scoped events for hat blocks', () => {
+  it('queues selector-scoped events for hat blocks', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'card', PARENT: '#scene'});
     extension.addClass({CLASS: 'monster', SELECTOR: '#card'});
 
@@ -285,7 +285,7 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.whenEventOnSelector({TYPE: 'attack', SELECTOR: '.monster'})).toBe(false);
   });
 
-  it('mounts the scene host near the stage and converts DOM events into hat events', () => {
+  it('mounts the scene host near the stage and converts DOM events into hat events', async () => {
     const document = new FakeDocument();
     vi.stubGlobal('document', document);
     vi.stubGlobal('HTMLElement', FakeElement);
@@ -305,7 +305,7 @@ describe('TurboWarpAFrameExtension', () => {
     );
 
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.whenEventOnSelector({TYPE: 'click', SELECTOR: '.monster'});
     extension.createNode({TYPE: 'box', ID: 'card', PARENT: '#scene'});
     extension.addClass({CLASS: 'monster', SELECTOR: '#card'});
@@ -415,9 +415,9 @@ describe('TurboWarpAFrameExtension', () => {
     expect(rotation?.values[3]).toBeCloseTo(0);
   });
 
-  it('rejects playback for empty animation clips with a clear error', () => {
+  it('rejects playback for empty animation clips with a clear error', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'leftArm', PARENT: '#scene'});
     extension.createAnimationClip({NAME: 'empty', DURATION: 1});
 
@@ -426,7 +426,7 @@ describe('TurboWarpAFrameExtension', () => {
     ).toThrow('3D animation clip has no keyframe tracks: empty');
   });
 
-  it('plays animation clips with a Three.js mixer when object3D is available', () => {
+  it('plays animation clips with a Three.js mixer when object3D is available', async () => {
     const updates: number[] = [];
     interface FakeAction {
       paused?: boolean;
@@ -439,6 +439,7 @@ describe('TurboWarpAFrameExtension', () => {
     const actions: FakeAction[] = [];
     const components: Record<string, unknown> = {};
     vi.stubGlobal('AFRAME', {
+      version: '1.8.0',
       components,
       THREE: {
         AnimationClip: class {
@@ -508,7 +509,7 @@ describe('TurboWarpAFrameExtension', () => {
     );
 
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'leftArm', PARENT: '#scene'});
     extension.createAnimationClip({NAME: 'wave', DURATION: 1});
     extension.addQuaternionKeyframeTrack({

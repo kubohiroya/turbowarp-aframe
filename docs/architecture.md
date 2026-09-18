@@ -32,6 +32,8 @@ Consumers must call `requireVersion(2)` before use. Any other version, including
 
 ## Scene initialization
 
+Before building the scene, `createScene` makes sure A-Frame 1.8.0 is on the page. It adds a script for `https://cdn.jsdelivr.net/npm/aframe@1.8.0/dist/aframe-v1.8.0.min.js` with a SHA-384 subresource integrity hash and `crossorigin="anonymous"`, so a changed file on the CDN is refused, and waits for it; the block resolves only after A-Frame is ready. Concurrent scenes share one load, and a failed or timed-out load (30 s) removes its script so the next call can try again. A page that already has A-Frame 1.8.0 loads nothing, which keeps an offline venue that serves its own copy working. Any other version on the page is refused, because a second A-Frame cannot run beside it and three-vrm is verified on the Three.js of 1.8.0 only. A-Frame is never bundled.
+
 `createScene` creates a root `#scene` node and, when a browser DOM exists, a `#tw-aframe-root > a-scene` host. The host is mounted inside the first detected TurboWarp stage wrapper or canvas parent, falling back to `document.body` only when no stage-like element is found.
 
 The initial layer values are strings so the book/API can refine the vocabulary without changing the block shape:

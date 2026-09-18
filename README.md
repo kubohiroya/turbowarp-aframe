@@ -22,7 +22,7 @@ It treats TurboWarp sprites and backdrops as places to run 3D scene logic, not a
 - Node.js 22 or newer
 - Corepack-managed pnpm
 - TurboWarp unsandboxed extension support
-- A-Frame loaded by the host page or project environment before using the generated extension in a browser
+- Network access to jsDelivr, from which `create 3D scene` loads A-Frame 1.8.0 pinned by version and subresource integrity; a page that already has A-Frame 1.8.0, such as an offline venue serving its own copy, loads nothing, and any other A-Frame version on the page is refused
 
 Unsandboxed extensions can manipulate the containing page. Load only generated extension bundles that you trust.
 
@@ -79,7 +79,7 @@ pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.4.0
 
 ### `create 3D scene with layer [LAYER] mode [MODE]`
 
-Initializes the A-Frame scene host and emits the scene ready event.
+Loads A-Frame 1.8.0 from jsDelivr when the page does not have it, initializes the A-Frame scene host, and emits the scene ready event.
 
 | Property | Value |
 |---|---|
@@ -531,3 +531,5 @@ pnpm run check
 ## License
 
 SPDX-License-Identifier: MPL-2.0
+
+The bundle includes `@pixiv/three-vrm` under the MIT License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -26,7 +26,7 @@
   			"opcode": "createScene",
   			"blockType": "COMMAND",
   			"text": "create 3D scene with layer [LAYER] mode [MODE]",
-  			"description": "Initializes the A-Frame scene host and emits the scene ready event.",
+  			"description": "Loads A-Frame 1.8.0 from jsDelivr when the page does not have it, initializes the A-Frame scene host, and emits the scene ready event.",
   			"arguments": {
   				"LAYER": {
   					"type": "STRING",
@@ -713,6 +713,69 @@
   		...vrmPort
   	});
   	return capability;
+  }
+  //#endregion
+  //#region src/aframe-loader.ts
+  /** The A-Frame this extension is built and tested against, including three-vrm on its Three.js. */
+  var aframeVersion = "1.8.0";
+  var aframeUrl = `https://cdn.jsdelivr.net/npm/aframe@${aframeVersion}/dist/aframe-v${aframeVersion}.min.js`;
+  /** Subresource integrity of `aframeUrl`, so a changed file on the CDN is refused. */
+  var aframeIntegrity = "sha384-d2HJ2eWTxYenz2Vcmsy7gDZW7G2Gq51k1M15G7vv2O/S60nSNYZVjtgGzPnd3sG+";
+  var loadTimeoutMs = 3e4;
+  /**
+  * Makes sure A-Frame 1.8.0 is on the page, loading it from jsDelivr when it is not.
+  *
+  * A page that already has A-Frame 1.8.0, such as an offline venue that serves its own copy,
+  * loads nothing. Any other A-Frame version is refused, because a second copy cannot be
+  * loaded beside it and three-vrm is verified on 1.8.0 only. Without a document, as in tests
+  * and non-browser runtimes, the scene graph works without A-Frame and nothing is loaded.
+  */
+  async function ensureAFrame() {
+  	const state = globalThis;
+  	if (state.AFRAME !== void 0) {
+  		requireVersion(state.AFRAME);
+  		return;
+  	}
+  	const head = typeof document === "undefined" ? void 0 : document.head;
+  	if (head === void 0 || head === null) return;
+  	state.__twAframeLoading ?? (state.__twAframeLoading = load(head).catch((error) => {
+  		delete state.__twAframeLoading;
+  		throw error;
+  	}));
+  	await state.__twAframeLoading;
+  }
+  function load(head) {
+  	return new Promise((resolve, reject) => {
+  		const script = document.createElement("script");
+  		const fail = (reason) => {
+  			clearTimeout(timer);
+  			script.remove();
+  			reject(/* @__PURE__ */ new Error(`Could not load A-Frame ${aframeVersion} from ${aframeUrl}: ${reason}`));
+  		};
+  		const timer = setTimeout(() => fail(`no response in ${loadTimeoutMs / 1e3} s`), loadTimeoutMs);
+  		script.src = aframeUrl;
+  		script.integrity = aframeIntegrity;
+  		script.crossOrigin = "anonymous";
+  		script.onload = () => {
+  			clearTimeout(timer);
+  			const loaded = globalThis.AFRAME;
+  			if (loaded === void 0) {
+  				reject(/* @__PURE__ */ new Error(`A-Frame ${aframeVersion} loaded but did not define AFRAME.`));
+  				return;
+  			}
+  			try {
+  				requireVersion(loaded);
+  				resolve();
+  			} catch (error) {
+  				reject(error instanceof Error ? error : new Error(String(error)));
+  			}
+  		};
+  		script.onerror = () => fail("the request failed or the file did not match its integrity hash");
+  		head.append(script);
+  	});
+  }
+  function requireVersion(aframe) {
+  	if (aframe.version !== "1.8.0") throw new Error(`A-Frame ${aframe.version ?? "(unknown version)"} is already on the page; TurboWarp-A-Frame needs ${aframeVersion}.`);
   }
   //#endregion
   //#region \0virtual:three-vrm-factory
@@ -6946,7 +7009,8 @@
   			blocks: blockDefinitions.map((block) => this.toScratchBlock(block))
   		};
   	}
-  	createScene(args) {
+  	async createScene(args) {
+  		await ensureAFrame();
   		this.sceneOptions = {
   			layer: Scratch.Cast.toString(args.LAYER) || "above-stage",
   			mode: Scratch.Cast.toString(args.MODE) || "3d"

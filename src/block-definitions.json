@@ -5,7 +5,7 @@
       "opcode": "createScene",
       "blockType": "COMMAND",
       "text": "create 3D scene with layer [LAYER] mode [MODE]",
-      "description": "Initializes the A-Frame scene host and emits the scene ready event.",
+      "description": "Loads A-Frame 1.8.0 from jsDelivr when the page does not have it, initializes the A-Frame scene host, and emits the scene ready event.",
       "arguments": {
         "LAYER": {"type": "STRING", "defaultValue": "above-stage"},
         "MODE": {"type": "STRING", "defaultValue": "3d"}

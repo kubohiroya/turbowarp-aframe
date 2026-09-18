@@ -145,6 +145,7 @@ function stubBrowser() {
   vi.stubGlobal('HTMLCanvasElement', class {});
   vi.stubGlobal('HTMLElement', SceneElement);
   vi.stubGlobal('AFRAME', {
+    version: '1.8.0',
     THREE: aframeThree,
     components: {},
     registerComponent(_name: string, definition: {tick: (time: number, delta: number) => void}) {
@@ -172,7 +173,7 @@ describe('the capability on the A-Frame Three.js', () => {
   it('loads a VRM through requireVersion(2) and turns it on the scene tick', async () => {
     const {tick} = stubBrowser();
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'empty', ID: 'avatar', PARENT: '#scene'});
     const capability = (Scratch.vm?.runtime ?? {})[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
     const v2 = capability.requireVersion(2);
