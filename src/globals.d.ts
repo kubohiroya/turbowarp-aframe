@@ -26,3 +26,13 @@ interface ScratchApi {
 }
 
 declare const Scratch: ScratchApi;
+
+declare module 'virtual:three-vrm-factory' {
+  export function createThreeVrm(THREE: unknown): {
+    VRMLoaderPlugin: new (parser: never) => unknown;
+    VRMUtils: {
+      deepDispose(object: never): void;
+      rotateVRM0(vrm: never): void;
+    };
+  };
+}

@@ -24,13 +24,15 @@ src/config.ts + src/block-definitions.json
 
 ## version付きruntime capability
 
-機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 1は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`だけを持つ狭い型付きportです。
+機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 2は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`に、`loadVrm`、`setVrmBoneRotation`、`vrmBoneNames`、`vrmStatus`を加えた、freezeされた狭い型付きportです。scene操作だけを持っていたversion 1は、version 2と並べて残さず0.4.0で撤去しました。正しく保つ契約を1つにするためです。
 
 各port methodは対応するblock handlerへ委譲します。そのため、block呼び出しと複合機能拡張からの呼び出しは、cast、validation、selector matching、event queue、機能拡張所有のscene stateを共有します。portはDOM element、A-Frame／Three.js object、glTF内部実装を公開しません。
 
-consumerは利用前に`requireVersion(1)`を呼ぶ必要があります。未対応versionは互換fallbackを試さず例外になります。`dispose()`はruntimeからcapabilityを削除し、実行中のanimation playbackを停止し、scene hostを除去して、dispose前にconsumerが保持した参照も恒久的に無効化します。disposeの反復呼び出しは安全です。
+consumerは利用前に`requireVersion(2)`を呼ぶ必要があります。1を含むそれ以外のversionは、互換fallbackを試さず例外になります。`dispose()`はruntimeからcapabilityを削除し、実行中のanimation playbackを停止し、scene hostを除去して、dispose前にconsumerが保持した参照も恒久的に無効化します。disposeの反復呼び出しは安全です。
 
 ## シーン初期化
+
+`createScene`はsceneを作る前に、ページにA-Frame 1.8.0があることを確かめます。なければ`https://cdn.jsdelivr.net/npm/aframe@1.8.0/dist/aframe-v1.8.0.min.js`のscriptを、SHA-384のsubresource integrityと`crossorigin="anonymous"`付きで追加して待ちます。CDN上のファイルが変わっていれば拒否され、blockはA-Frameの準備ができてから完了します。同時に作られたsceneは1回の読み込みを共有し、失敗またはtimeout（30秒）した読み込みはscriptを取り除いて、次の呼び出しで再試行できるようにします。ページにA-Frame 1.8.0がすでにあれば何も読み込まず、自前のコピーを配信するオフライン会場でも動きます。ほかのversionがあれば拒否します。2つ目のA-Frameは並べて動かせず、three-vrmは1.8.0のThree.jsでしか確かめていないためです。A-Frameはbundleしません。
 
 `createScene` は root の `#scene` ノードを作り、ブラウザ DOM がある場合は `#tw-aframe-root > a-scene` を作成します。host は最初に検出できた TurboWarp stage wrapper または canvas の親へ mount し、stage らしい要素が見つからない場合だけ `document.body` に fallback します。
 
@@ -111,7 +113,7 @@ track の `times` と `values` は comma または whitespace 区切りの numbe
 
 single-keyframe helper block はブロック優先の authoring path です。`.position`、`.scale`、`.quaternion` の keyframe を 1 つずつ挿入し、time 順に並べ、同じ clip、path、time の keyframe は後から追加した値で置き換えます。comma-separated full-track block は、Three.js 形式の配列をすでに持っている advanced user 向けに残します。
 
-再生は Scratch sprite ではなく一致した node に紐づきます。browser DOM、A-Frame、`AFRAME.THREE` が利用可能な場合、`play 3D animation clip` は対象 node の root `object3D` ごとに `AnimationMixer` を作成し、clip action を開始し、scene 上の小さな A-Frame bridge component から active mixer を更新します。glTF bone、child object path、material property、blending、cross-fade control は初期実装の外に置きます。DOM のない test environment では、Three.js object を作らず registry と validation を検証できます。
+再生は Scratch sprite ではなく一致した node に紐づきます。browser DOM、A-Frame、`AFRAME.THREE` が利用可能な場合、`play 3D animation clip` は対象 node の root `object3D` ごとに `AnimationMixer` を作成し、clip action を開始し、scene 上の小さな A-Frame bridge component から active mixer を更新します。glTF bone、child object path、material property、blending、cross-fade control は初期実装の外に置きます。VRMのヒューマノイドのボーンは、animation clipではなくVRMのブロックで回します。DOM のない test environment では、Three.js object を作らず registry と validation を検証できます。
 
 既存の `rotation` ブロックは A-Frame attribute を書くため degree-based のまま維持します。Quaternion animation は Three.js object state を使うため、A-Frame Euler attribute rotation とは別の機能として扱います。
 

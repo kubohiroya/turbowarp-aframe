@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-aframe",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A TurboWarp extension for declarative A-Frame scene graphs.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
@@ -31,7 +31,8 @@
     "src/",
     "README.md",
     "README.ja.md",
-    "LICENSE"
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "publishConfig": {
     "access": "public",
@@ -58,8 +59,11 @@
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@kubohiroya/vite-plugin-turbowarp-extension": "0.4.0",
+    "@pixiv/three-vrm": "3.5.5",
     "@types/node": "^24.13.3",
+    "@types/three": "0.184.0",
     "eslint": "^9.39.5",
+    "super-three": "0.184.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.2",

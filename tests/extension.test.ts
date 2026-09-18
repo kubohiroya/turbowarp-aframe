@@ -3,7 +3,7 @@ import {TurboWarpAFrameExtension} from '../src/extension.js';
 import {
   runtimeCapabilityKey,
   runtimeCapabilityVersion,
-  type AFrameRuntimeCapabilityV1
+  type AFrameRuntimeCapabilityV2
 } from '../src/runtime-capability.js';
 
 class FakeElement {
@@ -121,10 +121,12 @@ describe('TurboWarpAFrameExtension', () => {
   it('publishes a versioned scene capability that shares block behavior', () => {
     const extension = new TurboWarpAFrameExtension();
     const runtime = Scratch.vm?.runtime ?? {};
-    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
 
     expect(capability.version).toBe(runtimeCapabilityVersion);
-    expect(capability.requireVersion(1)).toBe(capability);
+    expect(capability.version).toBe(2);
+    expect(capability.requireVersion(2)).toBe(capability);
+    expect(Object.isFrozen(capability)).toBe(true);
     capability.loadTemplate(
       'actor',
       JSON.stringify({type: 'group', class: 'actor', children: [{type: 'sphere', id: 'head'}]})
@@ -148,20 +150,40 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.countSelector({SELECTOR: '.actor'})).toBe(0);
   });
 
-  it('rejects unsupported capability versions and calls after dispose', () => {
+  it('adds VRM operations to the capability', async () => {
     const extension = new TurboWarpAFrameExtension();
     const runtime = Scratch.vm?.runtime ?? {};
-    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
 
-    expect(() => capability.requireVersion(2)).toThrow(
-      'Unsupported A-Frame runtime capability version'
+    extension.createNode({TYPE: 'empty', ID: 'avatar', PARENT: '#scene'});
+    expect(capability.vrmStatus('#avatar')).toEqual({state: 'none', error: ''});
+    expect(capability.vrmBoneNames('#avatar')).toEqual([]);
+    expect(() => capability.setVrmBoneRotation('#avatar', 'hips', 0, 0, 0)).not.toThrow();
+    await expect(capability.loadVrm('avatar.vrm', '#missing')).rejects.toThrow(
+      'No A-Frame node matches: #missing'
     );
+  });
+
+  it('rejects every version but 2, and calls after dispose', async () => {
+    const extension = new TurboWarpAFrameExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
+
+    for (const version of [1, 3]) {
+      expect(() => capability.requireVersion(version)).toThrow(
+        `Unsupported A-Frame runtime capability version: ${version}; supported version is 2.`
+      );
+    }
 
     extension.dispose();
 
     expect(runtime[runtimeCapabilityKey]).toBeUndefined();
     expect(() => capability.countSelector('*')).toThrow('A-Frame runtime capability is disposed.');
-    expect(() => capability.requireVersion(1)).toThrow('A-Frame runtime capability is disposed.');
+    expect(() => capability.requireVersion(2)).toThrow('A-Frame runtime capability is disposed.');
+    expect(() => capability.vrmStatus('#avatar')).toThrow('A-Frame runtime capability is disposed.');
+    await expect(capability.loadVrm('avatar.vrm', '#avatar')).rejects.toThrow(
+      'A-Frame runtime capability is disposed.'
+    );
     expect(() => extension.dispose()).not.toThrow();
   });
 
@@ -182,10 +204,10 @@ describe('TurboWarpAFrameExtension', () => {
     expect(info.blocks.map((block) => block.opcode)).toContain('whenEventOnSelector');
   });
 
-  it('creates a scene and fires scene ready once', () => {
+  it('creates a scene and fires scene ready once', async () => {
     const extension = new TurboWarpAFrameExtension();
 
-    extension.createScene({LAYER: 'camera-under-3d', MODE: 'ar-fallback'});
+    await extension.createScene({LAYER: 'camera-under-3d', MODE: 'ar-fallback'});
 
     expect(extension.whenSceneReady()).toBe(true);
     expect(extension.eventTargetId()).toBe('scene');
@@ -195,9 +217,9 @@ describe('TurboWarpAFrameExtension', () => {
     });
   });
 
-  it('creates and mutates selected scene graph nodes', () => {
+  it('creates and mutates selected scene graph nodes', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'card', PARENT: '#scene'});
     extension.addClass({CLASS: 'monster', SELECTOR: '#card'});
     extension.setData({SELECTOR: '#card', KEY: 'zone', VALUE: 'field'});
@@ -226,9 +248,9 @@ describe('TurboWarpAFrameExtension', () => {
     });
   });
 
-  it('instantiates templates and deletes subtrees', () => {
+  it('instantiates templates and deletes subtrees', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.loadTemplate({
       ID: 'monster',
       SOURCE: JSON.stringify({
@@ -250,9 +272,9 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.countSelector({SELECTOR: '.part'})).toBe(1);
   });
 
-  it('queues selector-scoped events for hat blocks', () => {
+  it('queues selector-scoped events for hat blocks', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'card', PARENT: '#scene'});
     extension.addClass({CLASS: 'monster', SELECTOR: '#card'});
 
@@ -263,7 +285,7 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.whenEventOnSelector({TYPE: 'attack', SELECTOR: '.monster'})).toBe(false);
   });
 
-  it('mounts the scene host near the stage and converts DOM events into hat events', () => {
+  it('mounts the scene host near the stage and converts DOM events into hat events', async () => {
     const document = new FakeDocument();
     vi.stubGlobal('document', document);
     vi.stubGlobal('HTMLElement', FakeElement);
@@ -283,7 +305,7 @@ describe('TurboWarpAFrameExtension', () => {
     );
 
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.whenEventOnSelector({TYPE: 'click', SELECTOR: '.monster'});
     extension.createNode({TYPE: 'box', ID: 'card', PARENT: '#scene'});
     extension.addClass({CLASS: 'monster', SELECTOR: '#card'});
@@ -393,9 +415,9 @@ describe('TurboWarpAFrameExtension', () => {
     expect(rotation?.values[3]).toBeCloseTo(0);
   });
 
-  it('rejects playback for empty animation clips with a clear error', () => {
+  it('rejects playback for empty animation clips with a clear error', async () => {
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'leftArm', PARENT: '#scene'});
     extension.createAnimationClip({NAME: 'empty', DURATION: 1});
 
@@ -404,7 +426,7 @@ describe('TurboWarpAFrameExtension', () => {
     ).toThrow('3D animation clip has no keyframe tracks: empty');
   });
 
-  it('plays animation clips with a Three.js mixer when object3D is available', () => {
+  it('plays animation clips with a Three.js mixer when object3D is available', async () => {
     const updates: number[] = [];
     interface FakeAction {
       paused?: boolean;
@@ -417,6 +439,7 @@ describe('TurboWarpAFrameExtension', () => {
     const actions: FakeAction[] = [];
     const components: Record<string, unknown> = {};
     vi.stubGlobal('AFRAME', {
+      version: '1.8.0',
       components,
       THREE: {
         AnimationClip: class {
@@ -486,7 +509,7 @@ describe('TurboWarpAFrameExtension', () => {
     );
 
     const extension = new TurboWarpAFrameExtension();
-    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    await extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'box', ID: 'leftArm', PARENT: '#scene'});
     extension.createAnimationClip({NAME: 'wave', DURATION: 1});
     extension.addQuaternionKeyframeTrack({

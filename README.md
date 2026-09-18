@@ -22,18 +22,18 @@ It treats TurboWarp sprites and backdrops as places to run 3D scene logic, not a
 - Node.js 22 or newer
 - Corepack-managed pnpm
 - TurboWarp unsandboxed extension support
-- A-Frame loaded by the host page or project environment before using the generated extension in a browser
+- Network access to jsDelivr, from which `create 3D scene` loads A-Frame 1.8.0 pinned by version and subresource integrity; a page that already has A-Frame 1.8.0, such as an offline venue serving its own copy, loads nothing, and any other A-Frame version on the page is refused
 
 Unsandboxed extensions can manipulate the containing page. Load only generated extension bundles that you trust.
 
 ## Runtime scene capability
 
-Composite unsandboxed extensions can use the same scene operations as the blocks through the versioned runtime capability. Read `Scratch.vm.runtime.turbowarpAFrameCapability`, call `requireVersion(1)`, and then use these synchronous methods:
+Composite unsandboxed extensions can use the same scene operations as the blocks through the versioned runtime capability. Read `Scratch.vm.runtime.turbowarpAFrameCapability`, call `requireVersion(2)`, and use the object it returns. Version 2 is the only version; version 1 was removed in 0.4.0, and requesting any other version throws.
 
 ```ts
-interface AFrameRuntimeCapabilityV1 {
-  readonly version: 1;
-  requireVersion(version: number): AFrameRuntimeCapabilityV1;
+interface AFrameRuntimeCapabilityV2 {
+  readonly version: 2;
+  requireVersion(version: number): AFrameRuntimeCapabilityV2;
   loadTemplate(id: string, source: string): void;
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
@@ -41,10 +41,16 @@ interface AFrameRuntimeCapabilityV1 {
   emitEvent(type: string, selector: string, data: string): void;
   deleteSelector(selector: string): void;
   countSelector(selector: string): number;
+  loadVrm(url: string, selector: string): Promise<void>;
+  setVrmBoneRotation(selector: string, bone: string, x: number, y: number, z: number): void;
+  vrmBoneNames(selector: string): string[];
+  vrmStatus(selector: string): {state: 'none' | 'loading' | 'ready' | 'error'; error: string};
 }
 ```
 
-The capability deliberately exposes declarative templates and selectors, not private DOM nodes, A-Frame objects, Three.js objects, or glTF internals. Unsupported versions fail closed. A retained capability reference also rejects every operation after the extension is disposed.
+Besides the scene operations, version 2 carries VRM avatars. `loadVrm` loads the model onto the first node matching the selector with three-vrm, running on the Three.js that A-Frame loaded, and resolves when it is ready. `setVrmBoneRotation` sets Euler degrees on a normalized humanoid bone such as `leftUpperArm`, relative to the T-pose, so the same rotation means the same thing on every VRM; the scene tick applies it to the model's own bones. Nodes whose VRM is not ready are skipped, and an unknown bone name throws.
+
+The capability deliberately exposes declarative templates, selectors, and humanoid bone names, not private DOM nodes, A-Frame objects, Three.js objects, or glTF internals. Unsupported versions fail closed. A retained capability reference also rejects every operation after the extension is disposed.
 
 ## Install
 
@@ -64,7 +70,7 @@ Load `dist/turbowarp-aframe.js` as an unsandboxed custom extension in TurboWarp.
 For package-based reuse, pin the version:
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.3.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.4.0
 ```
 
 ## Block reference
@@ -73,7 +79,7 @@ pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.3.0
 
 ### `create 3D scene with layer [LAYER] mode [MODE]`
 
-Initializes the A-Frame scene host and emits the scene ready event.
+Loads A-Frame 1.8.0 from jsDelivr when the page does not have it, initializes the A-Frame scene host, and emits the scene ready event.
 
 | Property | Value |
 |---|---|
@@ -424,6 +430,51 @@ Reports whether any matching node has the stored 3D animation clip playing.
 | `CLIP` | String, default: `wave` |
 | `SELECTOR` | String, default: `#leftArm` |
 
+### `load VRM [URL] onto [SELECTOR]`
+
+Loads a VRM avatar with three-vrm on the A-Frame Three.js and attaches it to the first matching node. The block waits until the model is ready.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `loadVrm` |
+| `URL` | String, default: `avatar.vrm` |
+| `SELECTOR` | String, default: `#avatar` |
+
+### `set VRM [SELECTOR] bone [BONE] rotation x [X] y [Y] z [Z]`
+
+Sets the Euler rotation in degrees of a normalized VRM humanoid bone, relative to the T-pose, on every matching node whose VRM is ready.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `setVrmBoneRotation` |
+| `SELECTOR` | String, default: `#avatar` |
+| `BONE` | String, default: `leftUpperArm` |
+| `X` | Number, default: `0` |
+| `Y` | Number, default: `0` |
+| `Z` | Number, default: `-60` |
+
+### `VRM [SELECTOR] humanoid bones`
+
+Returns the humanoid bone names of the first matching node's VRM as a JSON array.
+
+| Property | Value |
+|---|---|
+| Type | Reporter |
+| Opcode | `vrmBoneNames` |
+| `SELECTOR` | String, default: `#avatar` |
+
+### `VRM [SELECTOR] state`
+
+Returns none, loading, ready, or error with its reason for the first matching node.
+
+| Property | Value |
+|---|---|
+| Type | Reporter |
+| Opcode | `vrmState` |
+| `SELECTOR` | String, default: `#avatar` |
+
 <!-- END GENERATED BLOCKS -->
 
 ## Scene model
@@ -442,7 +493,7 @@ When a selector matches multiple nodes, command blocks apply to all matches. Blo
 
 ## Keyframe animations
 
-Animation blocks create stored clip definitions and play them on matching node root `object3D` instances through `AFRAME.THREE.AnimationMixer` when A-Frame and Three.js are available. `VectorKeyframeTrack` supports `.position` and `.scale`; `QuaternionKeyframeTrack` supports `.quaternion`. glTF internals such as bones, child objects, and material properties are outside the initial scope.
+Animation blocks create stored clip definitions and play them on matching node root `object3D` instances through `AFRAME.THREE.AnimationMixer` when A-Frame and Three.js are available. `VectorKeyframeTrack` supports `.position` and `.scale`; `QuaternionKeyframeTrack` supports `.quaternion`. glTF internals such as bones, child objects, and material properties are outside the initial scope. VRM humanoid bones are turned by the VRM blocks rather than by animation clips.
 
 The CSV track blocks are low-level APIs that stay close to Three.js. Classroom and ordinary block projects should prefer the single-keyframe blocks: `add position keyframe...`, `add scale keyframe...`, and `add euler rotation keyframe...`. A keyframe with the same clip, path, and time replaces the earlier value.
 
@@ -480,3 +531,5 @@ pnpm run check
 ## License
 
 SPDX-License-Identifier: MPL-2.0
+
+The bundle includes `@pixiv/three-vrm` under the MIT License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

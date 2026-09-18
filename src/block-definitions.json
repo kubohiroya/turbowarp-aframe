@@ -5,7 +5,7 @@
       "opcode": "createScene",
       "blockType": "COMMAND",
       "text": "create 3D scene with layer [LAYER] mode [MODE]",
-      "description": "Initializes the A-Frame scene host and emits the scene ready event.",
+      "description": "Loads A-Frame 1.8.0 from jsDelivr when the page does not have it, initializes the A-Frame scene host, and emits the scene ready event.",
       "arguments": {
         "LAYER": {"type": "STRING", "defaultValue": "above-stage"},
         "MODE": {"type": "STRING", "defaultValue": "3d"}
@@ -323,6 +323,47 @@
       "arguments": {
         "CLIP": {"type": "STRING", "defaultValue": "wave"},
         "SELECTOR": {"type": "STRING", "defaultValue": "#leftArm"}
+      }
+    },
+    {
+      "opcode": "loadVrm",
+      "blockType": "COMMAND",
+      "text": "load VRM [URL] onto [SELECTOR]",
+      "description": "Loads a VRM avatar with three-vrm on the A-Frame Three.js and attaches it to the first matching node. The block waits until the model is ready.",
+      "arguments": {
+        "URL": {"type": "STRING", "defaultValue": "avatar.vrm"},
+        "SELECTOR": {"type": "STRING", "defaultValue": "#avatar"}
+      }
+    },
+    {
+      "opcode": "setVrmBoneRotation",
+      "blockType": "COMMAND",
+      "text": "set VRM [SELECTOR] bone [BONE] rotation x [X] y [Y] z [Z]",
+      "description": "Sets the Euler rotation in degrees of a normalized VRM humanoid bone, relative to the T-pose, on every matching node whose VRM is ready.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#avatar"},
+        "BONE": {"type": "STRING", "defaultValue": "leftUpperArm"},
+        "X": {"type": "NUMBER", "defaultValue": 0},
+        "Y": {"type": "NUMBER", "defaultValue": 0},
+        "Z": {"type": "NUMBER", "defaultValue": -60}
+      }
+    },
+    {
+      "opcode": "vrmBoneNames",
+      "blockType": "REPORTER",
+      "text": "VRM [SELECTOR] humanoid bones",
+      "description": "Returns the humanoid bone names of the first matching node's VRM as a JSON array.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#avatar"}
+      }
+    },
+    {
+      "opcode": "vrmState",
+      "blockType": "REPORTER",
+      "text": "VRM [SELECTOR] state",
+      "description": "Returns none, loading, ready, or error with its reason for the first matching node.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#avatar"}
       }
     }
   ]

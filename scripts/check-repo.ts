@@ -61,6 +61,7 @@ checkPackageMetadata();
 checkReadmes();
 checkLicense();
 checkGeneratedArtifacts();
+await checkThirdPartyBundle();
 await checkPackContents();
 
 if (errors.length > 0) {
@@ -163,6 +164,18 @@ function checkGeneratedArtifacts() {
   const expectedBundle = `dist/${extractConfigValue('slug')}.js`;
   if (!packageMetadata.files?.includes('dist/')) errors.push('package.json files must include dist/');
   if (!readme.includes(expectedBundle)) errors.push(`README.md must document ${expectedBundle}`);
+}
+
+async function checkThirdPartyBundle() {
+  if (!policy.exceptions.thirdPartyBundle) return;
+  const notices = await readFile('THIRD_PARTY_NOTICES.md', 'utf8');
+  if (!notices.includes('@pixiv/three-vrm')) {
+    errors.push('THIRD_PARTY_NOTICES.md must list the bundled @pixiv/three-vrm');
+  }
+  const bundle = await readFile(`dist/${extractConfigValue('slug')}.js`, 'utf8');
+  if (!bundle.includes('@pixiv/three-vrm is distributed under MIT License')) {
+    errors.push('The bundle must keep the @pixiv/three-vrm license banner');
+  }
 }
 
 async function checkPackContents() {

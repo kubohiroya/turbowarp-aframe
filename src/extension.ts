@@ -3,8 +3,11 @@ import definitions from './block-definitions.json';
 import {
   createRuntimeCapability,
   runtimeCapabilityKey,
-  type AFrameRuntimeCapabilityV1
+  type AFrameRuntimeCapabilityV2,
+  type AFrameVrmStatus
 } from './runtime-capability.js';
+import {ensureAFrame} from './aframe-loader.js';
+import {VrmAvatars, type VrmThreeApi} from './vrm.js';
 
 type BlockTypeName = 'COMMAND' | 'REPORTER' | 'HAT' | 'BOOLEAN';
 type ArgumentTypeName = 'STRING' | 'NUMBER' | 'BOOLEAN';
@@ -110,6 +113,11 @@ type AFrameApi = {
   registerComponent(name: string, definition: unknown): void;
 };
 
+interface VrmHostElement {
+  object3D?: {add(object: object): void};
+  setObject3D?(name: string, object: object): void;
+}
+
 const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
 const ROOT_ID = 'scene';
 const DOM_EVENT_TYPES = ['click', 'tap', 'pointerenter', 'pointerleave'] as const;
@@ -135,8 +143,9 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private rootElement: Element | null = null;
   private sceneReadyPending = false;
   private lastEvent: SceneEvent | null = null;
-  private readonly runtimeCapability: AFrameRuntimeCapabilityV1;
+  private readonly runtimeCapability: AFrameRuntimeCapabilityV2;
   private disposed = false;
+  private readonly vrms = new VrmAvatars(() => this.getThree() as unknown as VrmThreeApi | null);
 
   public constructor() {
     this.resetGraph();
@@ -152,7 +161,12 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
         emitEvent: (type, selector, data) =>
           this.emitEvent({TYPE: type, SELECTOR: selector, DATA: data}),
         deleteSelector: (selector) => this.deleteSelector({SELECTOR: selector}),
-        countSelector: (selector) => this.countSelector({SELECTOR: selector})
+        countSelector: (selector) => this.countSelector({SELECTOR: selector}),
+        loadVrm: (url, selector) => this.loadVrm({URL: url, SELECTOR: selector}),
+        setVrmBoneRotation: (selector, bone, x, y, z) =>
+          this.setVrmBoneRotation({SELECTOR: selector, BONE: bone, X: x, Y: y, Z: z}),
+        vrmBoneNames: (selector) => this.vrmBoneNamesFor(Scratch.Cast.toString(selector)),
+        vrmStatus: (selector) => this.vrmStatusFor(Scratch.Cast.toString(selector))
       },
       () => this.assertActive()
     );
@@ -170,7 +184,8 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     };
   }
 
-  public createScene(args: {LAYER: unknown; MODE: unknown}): void {
+  public async createScene(args: {LAYER: unknown; MODE: unknown}): Promise<void> {
+    await ensureAFrame();
     this.sceneOptions = {
       layer: Scratch.Cast.toString(args.LAYER) || 'above-stage',
       mode: Scratch.Cast.toString(args.MODE) || '3d'
@@ -500,8 +515,48 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     });
   }
 
+  public async loadVrm(args: {URL: unknown; SELECTOR: unknown}): Promise<void> {
+    const selector = Scratch.Cast.toString(args.SELECTOR);
+    const node = this.firstMatch(selector);
+    if (node === undefined) throw new Error(`No A-Frame node matches: ${selector}`);
+    const element = node.element as (Element & VrmHostElement) | null;
+    if (element === null) throw new Error('VRM avatars need a scene in the browser.');
+    this.ensureAnimationTickBridge();
+    await this.vrms.load(node.id, Scratch.Cast.toString(args.URL), (scene) => {
+      if (element.setObject3D !== undefined) {
+        element.setObject3D('vrm', scene);
+      } else {
+        element.object3D?.add(scene);
+      }
+    });
+  }
+
+  public setVrmBoneRotation(args: {
+    SELECTOR: unknown;
+    BONE: unknown;
+    X: unknown;
+    Y: unknown;
+    Z: unknown;
+  }): void {
+    const bone = Scratch.Cast.toString(args.BONE).trim();
+    const rotation = this.argsToVec3(args);
+    for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+      if (this.vrms.state(node.id) !== 'ready') continue;
+      this.vrms.setBoneRotation(node.id, bone, rotation);
+    }
+  }
+
+  public vrmBoneNames(args: {SELECTOR: unknown}): string {
+    return JSON.stringify(this.vrmBoneNamesFor(Scratch.Cast.toString(args.SELECTOR)));
+  }
+
+  public vrmState(args: {SELECTOR: unknown}): string {
+    const {state, error} = this.vrmStatusFor(Scratch.Cast.toString(args.SELECTOR));
+    return state === 'error' ? `error: ${error}` : state;
+  }
+
   public testStepAnimations(args: {DELTA: unknown}): void {
-    this.updateAnimationMixers(Scratch.Cast.toNumber(args.DELTA) / 1000);
+    this.updateFrame(Scratch.Cast.toNumber(args.DELTA) / 1000);
   }
 
   public snapshot(): Record<string, unknown> {
@@ -545,6 +600,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     for (const key of [...this.animationPlaybacks.keys()]) {
       this.stopPlayback(key, true);
     }
+    this.vrms.clear();
     this.rootElement?.parentElement?.remove();
     this.rootElement = null;
     const runtime = Scratch.vm?.runtime;
@@ -563,6 +619,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     for (const key of [...this.animationPlaybacks.keys()]) {
       this.stopPlayback(key, true);
     }
+    this.vrms.clear();
     this.nodes.clear();
     this.nodes.set(ROOT_ID, {
       id: ROOT_ID,
@@ -627,6 +684,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     }
     node.element?.remove();
     this.nodes.delete(id);
+    this.vrms.remove(id);
     for (const key of [...this.animationPlaybacks.keys()]) {
       if (key.startsWith(`${id}:`)) {
         this.stopPlayback(key, true);
@@ -1034,6 +1092,22 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     }
   }
 
+  private vrmBoneNamesFor(selector: string): string[] {
+    const node = this.firstMatch(selector);
+    return node === undefined ? [] : this.vrms.boneNames(node.id);
+  }
+
+  private vrmStatusFor(selector: string): AFrameVrmStatus {
+    const node = this.firstMatch(selector);
+    if (node === undefined) return {state: 'none', error: ''};
+    return {state: this.vrms.state(node.id), error: this.vrms.error(node.id)};
+  }
+
+  private updateFrame(deltaTime: number): void {
+    this.updateAnimationMixers(deltaTime);
+    if (Number.isFinite(deltaTime) && deltaTime >= 0) this.vrms.update(deltaTime);
+  }
+
   private updateAnimationMixers(deltaTime: number): void {
     if (!Number.isFinite(deltaTime) || deltaTime < 0) return;
     for (const playback of this.animationPlaybacks.values()) {
@@ -1054,7 +1128,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
         schema: {id: {type: 'string'}},
         tick(this: {data: {id: string}}, _time: number, timeDelta: number) {
           const extension = animationRuntimeRegistry().get(this.data.id);
-          extension?.updateAnimationMixers(timeDelta / 1000);
+          extension?.updateFrame(timeDelta / 1000);
         }
       });
     }
