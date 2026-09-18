@@ -24,11 +24,11 @@ The generated JavaScript bundle is an unsandboxed TurboWarp extension. The manif
 
 ## Versioned Runtime Capability
 
-The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 1 is a narrow typed port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`.
+The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 1 is a narrow typed port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`. Version 2 is version 1 plus `loadVrm`, `setVrmBoneRotation`, `vrmBoneNames`, and `vrmStatus`. The object at the runtime key stays version 1, because existing consumers check `version === 1`; `requireVersion(2)` returns the version 2 object, and both objects negotiate to each other and are frozen.
 
 Each port method delegates to the corresponding block handler. Consequently, block calls and composite-extension calls share casting, validation, selector matching, event queuing, and the extension-owned scene state. The port never exposes DOM elements, A-Frame/Three.js objects, or glTF internals.
 
-Consumers must call `requireVersion(1)` before use. An unsupported version throws instead of attempting compatibility fallback. `dispose()` removes the capability from the runtime, stops active animation playbacks, removes the scene host, and permanently invalidates references that a consumer retained before disposal. Repeated disposal is safe.
+Consumers must call `requireVersion(1)` or `requireVersion(2)` before use. An unsupported version throws instead of attempting compatibility fallback. `dispose()` removes the capability from the runtime, stops active animation playbacks, removes the scene host, and permanently invalidates references that a consumer retained before disposal. Repeated disposal is safe.
 
 ## Scene initialization
 
@@ -111,7 +111,7 @@ Track `times` and `values` are passed as comma- or whitespace-separated number l
 
 Single-keyframe helper blocks provide the block-first authoring path. They insert one `.position`, `.scale`, or `.quaternion` keyframe at a time, keep keyframes sorted, and replace an existing keyframe when the clip, path, and time match. The comma-separated full-track blocks remain available for advanced users who already have Three.js-style arrays.
 
-Playback is attached to matching nodes, not Scratch sprites. When browser DOM, A-Frame, and `AFRAME.THREE` are available, `play 3D animation clip` creates an `AnimationMixer` for each target node root `object3D`, starts a clip action, and updates active mixers through a small A-Frame bridge component on the scene. glTF bones, child object paths, material properties, blending, and cross-fade controls are left outside the first implementation. In non-DOM test environments, the registry and validation behavior remain testable without constructing Three.js objects.
+Playback is attached to matching nodes, not Scratch sprites. When browser DOM, A-Frame, and `AFRAME.THREE` are available, `play 3D animation clip` creates an `AnimationMixer` for each target node root `object3D`, starts a clip action, and updates active mixers through a small A-Frame bridge component on the scene. glTF bones, child object paths, material properties, blending, and cross-fade controls are left outside the first implementation. VRM humanoid bones are turned by the VRM blocks rather than by animation clips. In non-DOM test environments, the registry and validation behavior remain testable without constructing Three.js objects.
 
 The existing `rotation` block remains degree-based because it writes A-Frame attributes. Quaternion animation uses Three.js object state and should be documented as separate from A-Frame Euler attribute rotation.
 

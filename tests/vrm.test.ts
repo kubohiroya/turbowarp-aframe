@@ -1,8 +1,10 @@
 import * as THREE from 'super-three';
 import {GLTFLoader} from 'super-three/addons/loaders/GLTFLoader.js';
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {createThreeVrm} from 'virtual:three-vrm-factory';
 import {createTestVrm} from '../scripts/generate-test-vrm.js';
+import {TurboWarpAFrameExtension} from '../src/extension.js';
+import {runtimeCapabilityKey, type AFrameRuntimeCapabilityV1} from '../src/runtime-capability.js';
 import {VrmAvatars, type VrmThreeApi} from '../src/vrm.js';
 
 // Three.js reports download progress with ProgressEvent, which Node does not have.
@@ -102,5 +104,97 @@ describe('three-vrm on the A-Frame Three.js', () => {
   it('asks for A-Frame when there is no Three.js', async () => {
     const avatars = new VrmAvatars(() => null);
     await expect(avatars.load('avatar', vrmUrl, () => {})).rejects.toThrow(/A-Frame to be loaded first/u);
+  });
+});
+
+// Just enough of the browser for the extension to build its scene: each element carries a
+// real Object3D, as A-Frame entities do.
+class SceneElement extends EventTarget {
+  public readonly children: SceneElement[] = [];
+  public readonly dataset: Record<string, string> = {};
+  public readonly style: Record<string, string> = {};
+  public readonly object3D = new THREE.Group();
+  public parentElement: SceneElement | null = null;
+  public id = '';
+
+  public append(child: SceneElement): void {
+    child.parentElement = this;
+    this.children.push(child);
+    this.object3D.add(child.object3D);
+  }
+
+  public remove(): void {
+    if (this.parentElement === null) return;
+    this.parentElement.children.splice(this.parentElement.children.indexOf(this), 1);
+    this.parentElement.object3D.remove(this.object3D);
+    this.parentElement = null;
+  }
+
+  public setAttribute(): void {}
+}
+
+function stubBrowser() {
+  const stage = new SceneElement();
+  const tick: Array<(time: number, delta: number) => void> = [];
+  vi.stubGlobal('document', {
+    createElement: () => new SceneElement(),
+    getElementById: () => null,
+    querySelector: (selector: string) => (selector === '[class*="stage_stage-wrapper"]' ? stage : null)
+  });
+  vi.stubGlobal('getComputedStyle', () => ({position: 'relative'}));
+  vi.stubGlobal('HTMLCanvasElement', class {});
+  vi.stubGlobal('HTMLElement', SceneElement);
+  vi.stubGlobal('AFRAME', {
+    THREE: aframeThree,
+    components: {},
+    registerComponent(_name: string, definition: {tick: (time: number, delta: number) => void}) {
+      tick.push((time, delta) => definition.tick.call({data: {id: runtimeId()}}, time, delta));
+    }
+  });
+  vi.stubGlobal('Scratch', {
+    vm: {runtime: {}},
+    Cast: {toString: String, toNumber: Number, toBoolean: Boolean}
+  });
+  return {tick};
+}
+
+function runtimeId(): string {
+  const runtimes = (globalThis as {__twAframeAnimationRuntimes?: Map<string, unknown>})
+    .__twAframeAnimationRuntimes;
+  return [...(runtimes?.keys() ?? [])].at(-1) ?? '';
+}
+
+describe('capability v2 on the A-Frame Three.js', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('loads a VRM through requireVersion(2) and turns it on the scene tick', async () => {
+    const {tick} = stubBrowser();
+    const extension = new TurboWarpAFrameExtension();
+    extension.createScene({LAYER: 'above-stage', MODE: '3d'});
+    extension.createNode({TYPE: 'empty', ID: 'avatar', PARENT: '#scene'});
+    const capability = (Scratch.vm?.runtime ?? {})[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+    const v2 = capability.requireVersion(2);
+
+    const loading = v2.loadVrm(vrmUrl, '#avatar');
+    expect(v2.vrmStatus('#avatar')).toEqual({state: 'loading', error: ''});
+    await loading;
+    expect(v2.vrmStatus('#avatar')).toEqual({state: 'ready', error: ''});
+    expect(v2.vrmBoneNames('#avatar')).toEqual(expect.arrayContaining(requiredBones));
+
+    const scene = (document.querySelector('[class*="stage_stage-wrapper"]') as unknown as SceneElement)
+      .object3D;
+    v2.setVrmBoneRotation('#avatar', 'leftUpperArm', 0, 0, -90);
+    expect(worldPosition(scene, 'leftHand').y).toBeCloseTo(1.35, 5);
+    expect(tick).toHaveLength(1);
+    tick[0]?.(0, 16);
+    expect(worldPosition(scene, 'leftHand').y).toBeCloseTo(0.85, 5);
+
+    expect(() => v2.setVrmBoneRotation('#avatar', 'tail', 0, 0, 0)).toThrow(/no humanoid bone: tail/u);
+    v2.deleteSelector('#avatar');
+    expect(v2.vrmStatus('#avatar')).toEqual({state: 'none', error: ''});
+    expect(scene.getObjectByName('leftHand')).toBeUndefined();
+    extension.dispose();
   });
 });

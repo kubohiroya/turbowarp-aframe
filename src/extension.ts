@@ -3,7 +3,8 @@ import definitions from './block-definitions.json';
 import {
   createRuntimeCapability,
   runtimeCapabilityKey,
-  type AFrameRuntimeCapabilityV1
+  type AFrameRuntimeCapabilityV1,
+  type AFrameVrmStatus
 } from './runtime-capability.js';
 import {VrmAvatars, type VrmThreeApi} from './vrm.js';
 
@@ -159,7 +160,12 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
         emitEvent: (type, selector, data) =>
           this.emitEvent({TYPE: type, SELECTOR: selector, DATA: data}),
         deleteSelector: (selector) => this.deleteSelector({SELECTOR: selector}),
-        countSelector: (selector) => this.countSelector({SELECTOR: selector})
+        countSelector: (selector) => this.countSelector({SELECTOR: selector}),
+        loadVrm: (url, selector) => this.loadVrm({URL: url, SELECTOR: selector}),
+        setVrmBoneRotation: (selector, bone, x, y, z) =>
+          this.setVrmBoneRotation({SELECTOR: selector, BONE: bone, X: x, Y: y, Z: z}),
+        vrmBoneNames: (selector) => this.vrmBoneNamesFor(Scratch.Cast.toString(selector)),
+        vrmStatus: (selector) => this.vrmStatusFor(Scratch.Cast.toString(selector))
       },
       () => this.assertActive()
     );
@@ -539,15 +545,12 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   }
 
   public vrmBoneNames(args: {SELECTOR: unknown}): string {
-    const node = this.firstMatch(Scratch.Cast.toString(args.SELECTOR));
-    return JSON.stringify(node === undefined ? [] : this.vrms.boneNames(node.id));
+    return JSON.stringify(this.vrmBoneNamesFor(Scratch.Cast.toString(args.SELECTOR)));
   }
 
   public vrmState(args: {SELECTOR: unknown}): string {
-    const node = this.firstMatch(Scratch.Cast.toString(args.SELECTOR));
-    if (node === undefined) return 'none';
-    const state = this.vrms.state(node.id);
-    return state === 'error' ? `error: ${this.vrms.error(node.id)}` : state;
+    const {state, error} = this.vrmStatusFor(Scratch.Cast.toString(args.SELECTOR));
+    return state === 'error' ? `error: ${error}` : state;
   }
 
   public testStepAnimations(args: {DELTA: unknown}): void {
@@ -1085,6 +1088,17 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
         this.stopPlayback(key, true);
       }
     }
+  }
+
+  private vrmBoneNamesFor(selector: string): string[] {
+    const node = this.firstMatch(selector);
+    return node === undefined ? [] : this.vrms.boneNames(node.id);
+  }
+
+  private vrmStatusFor(selector: string): AFrameVrmStatus {
+    const node = this.firstMatch(selector);
+    if (node === undefined) return {state: 'none', error: ''};
+    return {state: this.vrms.state(node.id), error: this.vrms.error(node.id)};
   }
 
   private updateFrame(deltaTime: number): void {

@@ -28,12 +28,14 @@ unsandboxed 拡張はページ DOM を操作できます。信頼できる生成
 
 ## runtime scene capability
 
-複合的なunsandboxed機能拡張は、version付きruntime capabilityを通じてブロックと同じscene操作を利用できます。`Scratch.vm.runtime.turbowarpAFrameCapability`を取得し、最初に`requireVersion(1)`を呼んでから、次の同期メソッドを利用します。
+複合的なunsandboxed機能拡張は、version付きruntime capabilityを通じてブロックと同じscene操作を利用できます。`Scratch.vm.runtime.turbowarpAFrameCapability`を取得し、`requireVersion(1)`または`requireVersion(2)`を呼んで、返ったオブジェクトを利用します。runtimeのキーに置かれたオブジェクトは常に`version: 1`を示すため、version 1向けに書かれたconsumerはそのまま動きます。version 2には`requireVersion(2)`を通してだけ到達します。
 
 ```ts
 interface AFrameRuntimeCapabilityV1 {
   readonly version: 1;
-  requireVersion(version: number): AFrameRuntimeCapabilityV1;
+  readonly supportedVersions: readonly (1 | 2)[];
+  requireVersion(version: 1): AFrameRuntimeCapabilityV1;
+  requireVersion(version: 2): AFrameRuntimeCapabilityV2;
   loadTemplate(id: string, source: string): void;
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
@@ -42,9 +44,19 @@ interface AFrameRuntimeCapabilityV1 {
   deleteSelector(selector: string): void;
   countSelector(selector: string): number;
 }
+
+// version 1のすべてに加えて（versionは2）：
+interface AFrameRuntimeCapabilityV2 {
+  loadVrm(url: string, selector: string): Promise<void>;
+  setVrmBoneRotation(selector: string, bone: string, x: number, y: number, z: number): void;
+  vrmBoneNames(selector: string): string[];
+  vrmStatus(selector: string): {state: 'none' | 'loading' | 'ready' | 'error'; error: string};
+}
 ```
 
-このcapabilityが公開するのは宣言的templateとselectorだけです。private DOM node、A-Frame object、Three.js object、glTF内部実装は公開しません。未対応versionはfail closedし、機能拡張のdispose後に保持されたcapabilityを呼び出した場合も、すべて明示的に拒否します。
+version 2はVRMアバターを加えます。`loadVrm`は、A-Frameが読み込んだThree.jsの上でthree-vrmを動かし、selectorに最初に一致したnodeへモデルを読み込んで、準備ができると解決します。`setVrmBoneRotation`は、`leftUpperArm`などの正規化されたヒューマノイドのボーンへ、Tポーズからの回転を度のEuler角で設定します。どのVRMでも同じ回転が同じ意味になり、sceneのtickがモデル本来のボーンへ反映します。VRMの準備ができていないnodeは飛ばし、存在しないボーン名は例外になります。
+
+このcapabilityが公開するのは宣言的template、selector、ヒューマノイドのボーン名だけです。private DOM node、A-Frame object、Three.js object、glTF内部実装は公開しません。未対応versionはfail closedし、機能拡張のdispose後に保持されたcapabilityを呼び出した場合も、すべて明示的に拒否します。
 
 ## インストール
 
@@ -118,7 +130,7 @@ pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.3.0
 
 ## キーフレームアニメーション
 
-animation ブロックは clip 定義を保存し、A-Frame と Three.js が利用可能な場合に `AFRAME.THREE.AnimationMixer` で一致 node の root `object3D` へ再生します。`VectorKeyframeTrack` は `.position` と `.scale`、`QuaternionKeyframeTrack` は `.quaternion` を対象にします。glTF 内部の bone、child object、material property は初期スコープ外です。
+animation ブロックは clip 定義を保存し、A-Frame と Three.js が利用可能な場合に `AFRAME.THREE.AnimationMixer` で一致 node の root `object3D` へ再生します。`VectorKeyframeTrack` は `.position` と `.scale`、`QuaternionKeyframeTrack` は `.quaternion` を対象にします。glTF 内部の bone、child object、material property は初期スコープ外です。VRMのヒューマノイドのボーンは、animation clipではなくVRMのブロックで回します。
 
 CSV 形式の track ブロックは Three.js に近い低レベル API です。教材や通常のブロック制作では、`add position keyframe...`、`add scale keyframe...`、`add euler rotation keyframe...` のように 1 keyframe ずつ追加するブロックを使います。同じ clip、同じ path、同じ time の keyframe は後から追加した値で置き換えます。
 

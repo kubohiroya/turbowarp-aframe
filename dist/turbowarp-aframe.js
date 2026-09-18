@@ -652,15 +652,18 @@
   		}
   	]
   };
+  //#endregion
+  //#region src/runtime-capability.ts
+  var supportedRuntimeCapabilityVersions = Object.freeze([1, 2]);
   var runtimeCapabilityKey = "turbowarpAFrameCapability";
   function createRuntimeCapability(scene, assertActive) {
-  	const capability = {
-  		version: 1,
-  		requireVersion(version) {
-  			assertActive();
-  			if (version !== 1) throw new Error(`Unsupported A-Frame runtime capability version: ${version}; supported version is 1.`);
-  			return capability;
-  		},
+  	function requireVersion(version) {
+  		assertActive();
+  		if (version === 1) return v1;
+  		if (version === 2) return v2;
+  		throw new Error(`Unsupported A-Frame runtime capability version: ${version}; supported versions are ${supportedRuntimeCapabilityVersions.join(", ")}.`);
+  	}
+  	const scenePort = {
   		loadTemplate(id, source) {
   			assertActive();
   			scene.loadTemplate(id, source);
@@ -690,7 +693,40 @@
   			return scene.countSelector(selector);
   		}
   	};
-  	return Object.freeze(capability);
+  	const vrmPort = {
+  		async loadVrm(url, selector) {
+  			assertActive();
+  			await scene.loadVrm(url, selector);
+  		},
+  		setVrmBoneRotation(selector, bone, x, y, z) {
+  			assertActive();
+  			scene.setVrmBoneRotation(selector, bone, x, y, z);
+  		},
+  		vrmBoneNames(selector) {
+  			assertActive();
+  			return scene.vrmBoneNames(selector);
+  		},
+  		vrmStatus(selector) {
+  			assertActive();
+  			return scene.vrmStatus(selector);
+  		}
+  	};
+  	const negotiation = {
+  		supportedVersions: supportedRuntimeCapabilityVersions,
+  		requireVersion
+  	};
+  	const v1 = Object.freeze({
+  		version: 1,
+  		...negotiation,
+  		...scenePort
+  	});
+  	const v2 = Object.freeze({
+  		version: 2,
+  		...negotiation,
+  		...scenePort,
+  		...vrmPort
+  	});
+  	return v1;
   }
   //#endregion
   //#region \0virtual:three-vrm-factory
@@ -6897,7 +6933,20 @@
   				DATA: data
   			}),
   			deleteSelector: (selector) => this.deleteSelector({ SELECTOR: selector }),
-  			countSelector: (selector) => this.countSelector({ SELECTOR: selector })
+  			countSelector: (selector) => this.countSelector({ SELECTOR: selector }),
+  			loadVrm: (url, selector) => this.loadVrm({
+  				URL: url,
+  				SELECTOR: selector
+  			}),
+  			setVrmBoneRotation: (selector, bone, x, y, z) => this.setVrmBoneRotation({
+  				SELECTOR: selector,
+  				BONE: bone,
+  				X: x,
+  				Y: y,
+  				Z: z
+  			}),
+  			vrmBoneNames: (selector) => this.vrmBoneNamesFor(Scratch.Cast.toString(selector)),
+  			vrmStatus: (selector) => this.vrmStatusFor(Scratch.Cast.toString(selector))
   		}, () => this.assertActive());
   		const runtime = Scratch.vm?.runtime;
   		if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
@@ -7172,14 +7221,11 @@
   		}
   	}
   	vrmBoneNames(args) {
-  		const node = this.firstMatch(Scratch.Cast.toString(args.SELECTOR));
-  		return JSON.stringify(node === void 0 ? [] : this.vrms.boneNames(node.id));
+  		return JSON.stringify(this.vrmBoneNamesFor(Scratch.Cast.toString(args.SELECTOR)));
   	}
   	vrmState(args) {
-  		const node = this.firstMatch(Scratch.Cast.toString(args.SELECTOR));
-  		if (node === void 0) return "none";
-  		const state = this.vrms.state(node.id);
-  		return state === "error" ? `error: ${this.vrms.error(node.id)}` : state;
+  		const { state, error } = this.vrmStatusFor(Scratch.Cast.toString(args.SELECTOR));
+  		return state === "error" ? `error: ${error}` : state;
   	}
   	testStepAnimations(args) {
   		this.updateFrame(Scratch.Cast.toNumber(args.DELTA) / 1e3);
@@ -7561,6 +7607,21 @@
   	}
   	stopClipEverywhere(clipName) {
   		for (const [key, playback] of [...this.animationPlaybacks.entries()]) if (playback.clipName === clipName) this.stopPlayback(key, true);
+  	}
+  	vrmBoneNamesFor(selector) {
+  		const node = this.firstMatch(selector);
+  		return node === void 0 ? [] : this.vrms.boneNames(node.id);
+  	}
+  	vrmStatusFor(selector) {
+  		const node = this.firstMatch(selector);
+  		if (node === void 0) return {
+  			state: "none",
+  			error: ""
+  		};
+  		return {
+  			state: this.vrms.state(node.id),
+  			error: this.vrms.error(node.id)
+  		};
   	}
   	updateFrame(deltaTime) {
   		this.updateAnimationMixers(deltaTime);

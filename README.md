@@ -28,12 +28,14 @@ Unsandboxed extensions can manipulate the containing page. Load only generated e
 
 ## Runtime scene capability
 
-Composite unsandboxed extensions can use the same scene operations as the blocks through the versioned runtime capability. Read `Scratch.vm.runtime.turbowarpAFrameCapability`, call `requireVersion(1)`, and then use these synchronous methods:
+Composite unsandboxed extensions can use the same scene operations as the blocks through the versioned runtime capability. Read `Scratch.vm.runtime.turbowarpAFrameCapability`, call `requireVersion(1)` or `requireVersion(2)`, and use the object it returns. The object at the runtime key always reports `version: 1`, so consumers written for version 1 keep working; version 2 is reached only through `requireVersion(2)`.
 
 ```ts
 interface AFrameRuntimeCapabilityV1 {
   readonly version: 1;
-  requireVersion(version: number): AFrameRuntimeCapabilityV1;
+  readonly supportedVersions: readonly (1 | 2)[];
+  requireVersion(version: 1): AFrameRuntimeCapabilityV1;
+  requireVersion(version: 2): AFrameRuntimeCapabilityV2;
   loadTemplate(id: string, source: string): void;
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
@@ -42,9 +44,19 @@ interface AFrameRuntimeCapabilityV1 {
   deleteSelector(selector: string): void;
   countSelector(selector: string): number;
 }
+
+// Everything in version 1, with version: 2, plus:
+interface AFrameRuntimeCapabilityV2 {
+  loadVrm(url: string, selector: string): Promise<void>;
+  setVrmBoneRotation(selector: string, bone: string, x: number, y: number, z: number): void;
+  vrmBoneNames(selector: string): string[];
+  vrmStatus(selector: string): {state: 'none' | 'loading' | 'ready' | 'error'; error: string};
+}
 ```
 
-The capability deliberately exposes declarative templates and selectors, not private DOM nodes, A-Frame objects, Three.js objects, or glTF internals. Unsupported versions fail closed. A retained capability reference also rejects every operation after the extension is disposed.
+Version 2 adds VRM avatars. `loadVrm` loads the model onto the first node matching the selector with three-vrm, running on the Three.js that A-Frame loaded, and resolves when it is ready. `setVrmBoneRotation` sets Euler degrees on a normalized humanoid bone such as `leftUpperArm`, relative to the T-pose, so the same rotation means the same thing on every VRM; the scene tick applies it to the model's own bones. Nodes whose VRM is not ready are skipped, and an unknown bone name throws.
+
+The capability deliberately exposes declarative templates, selectors, and humanoid bone names, not private DOM nodes, A-Frame objects, Three.js objects, or glTF internals. Unsupported versions fail closed. A retained capability reference also rejects every operation after the extension is disposed.
 
 ## Install
 
@@ -487,7 +499,7 @@ When a selector matches multiple nodes, command blocks apply to all matches. Blo
 
 ## Keyframe animations
 
-Animation blocks create stored clip definitions and play them on matching node root `object3D` instances through `AFRAME.THREE.AnimationMixer` when A-Frame and Three.js are available. `VectorKeyframeTrack` supports `.position` and `.scale`; `QuaternionKeyframeTrack` supports `.quaternion`. glTF internals such as bones, child objects, and material properties are outside the initial scope.
+Animation blocks create stored clip definitions and play them on matching node root `object3D` instances through `AFRAME.THREE.AnimationMixer` when A-Frame and Three.js are available. `VectorKeyframeTrack` supports `.position` and `.scale`; `QuaternionKeyframeTrack` supports `.quaternion`. glTF internals such as bones, child objects, and material properties are outside the initial scope. VRM humanoid bones are turned by the VRM blocks rather than by animation clips.
 
 The CSV track blocks are low-level APIs that stay close to Three.js. Classroom and ordinary block projects should prefer the single-keyframe blocks: `add position keyframe...`, `add scale keyframe...`, and `add euler rotation keyframe...`. A keyframe with the same clip, path, and time replaces the earlier value.
 
