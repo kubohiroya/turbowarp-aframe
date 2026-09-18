@@ -24,11 +24,11 @@ The generated JavaScript bundle is an unsandboxed TurboWarp extension. The manif
 
 ## Versioned Runtime Capability
 
-The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 1 is a narrow typed port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`. Version 2 is version 1 plus `loadVrm`, `setVrmBoneRotation`, `vrmBoneNames`, and `vrmStatus`. The object at the runtime key stays version 1, because existing consumers check `version === 1`; `requireVersion(2)` returns the version 2 object, and both objects negotiate to each other and are frozen.
+The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 2 is a narrow typed, frozen port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`, plus `loadVrm`, `setVrmBoneRotation`, `vrmBoneNames`, and `vrmStatus`. Version 1, which had only the scene operations, was removed in 0.4.0 rather than kept beside version 2, so there is a single contract to keep correct.
 
 Each port method delegates to the corresponding block handler. Consequently, block calls and composite-extension calls share casting, validation, selector matching, event queuing, and the extension-owned scene state. The port never exposes DOM elements, A-Frame/Three.js objects, or glTF internals.
 
-Consumers must call `requireVersion(1)` or `requireVersion(2)` before use. An unsupported version throws instead of attempting compatibility fallback. `dispose()` removes the capability from the runtime, stops active animation playbacks, removes the scene host, and permanently invalidates references that a consumer retained before disposal. Repeated disposal is safe.
+Consumers must call `requireVersion(2)` before use. Any other version, including 1, throws instead of attempting compatibility fallback. `dispose()` removes the capability from the runtime, stops active animation playbacks, removes the scene host, and permanently invalidates references that a consumer retained before disposal. Repeated disposal is safe.
 
 ## Scene initialization
 

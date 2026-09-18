@@ -28,14 +28,12 @@ Unsandboxed extensions can manipulate the containing page. Load only generated e
 
 ## Runtime scene capability
 
-Composite unsandboxed extensions can use the same scene operations as the blocks through the versioned runtime capability. Read `Scratch.vm.runtime.turbowarpAFrameCapability`, call `requireVersion(1)` or `requireVersion(2)`, and use the object it returns. The object at the runtime key always reports `version: 1`, so consumers written for version 1 keep working; version 2 is reached only through `requireVersion(2)`.
+Composite unsandboxed extensions can use the same scene operations as the blocks through the versioned runtime capability. Read `Scratch.vm.runtime.turbowarpAFrameCapability`, call `requireVersion(2)`, and use the object it returns. Version 2 is the only version; version 1 was removed in 0.4.0, and requesting any other version throws.
 
 ```ts
-interface AFrameRuntimeCapabilityV1 {
-  readonly version: 1;
-  readonly supportedVersions: readonly (1 | 2)[];
-  requireVersion(version: 1): AFrameRuntimeCapabilityV1;
-  requireVersion(version: 2): AFrameRuntimeCapabilityV2;
+interface AFrameRuntimeCapabilityV2 {
+  readonly version: 2;
+  requireVersion(version: number): AFrameRuntimeCapabilityV2;
   loadTemplate(id: string, source: string): void;
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
@@ -43,10 +41,6 @@ interface AFrameRuntimeCapabilityV1 {
   emitEvent(type: string, selector: string, data: string): void;
   deleteSelector(selector: string): void;
   countSelector(selector: string): number;
-}
-
-// Everything in version 1, with version: 2, plus:
-interface AFrameRuntimeCapabilityV2 {
   loadVrm(url: string, selector: string): Promise<void>;
   setVrmBoneRotation(selector: string, bone: string, x: number, y: number, z: number): void;
   vrmBoneNames(selector: string): string[];
@@ -54,7 +48,7 @@ interface AFrameRuntimeCapabilityV2 {
 }
 ```
 
-Version 2 adds VRM avatars. `loadVrm` loads the model onto the first node matching the selector with three-vrm, running on the Three.js that A-Frame loaded, and resolves when it is ready. `setVrmBoneRotation` sets Euler degrees on a normalized humanoid bone such as `leftUpperArm`, relative to the T-pose, so the same rotation means the same thing on every VRM; the scene tick applies it to the model's own bones. Nodes whose VRM is not ready are skipped, and an unknown bone name throws.
+Besides the scene operations, version 2 carries VRM avatars. `loadVrm` loads the model onto the first node matching the selector with three-vrm, running on the Three.js that A-Frame loaded, and resolves when it is ready. `setVrmBoneRotation` sets Euler degrees on a normalized humanoid bone such as `leftUpperArm`, relative to the T-pose, so the same rotation means the same thing on every VRM; the scene tick applies it to the model's own bones. Nodes whose VRM is not ready are skipped, and an unknown bone name throws.
 
 The capability deliberately exposes declarative templates, selectors, and humanoid bone names, not private DOM nodes, A-Frame objects, Three.js objects, or glTF internals. Unsupported versions fail closed. A retained capability reference also rejects every operation after the extension is disposed.
 

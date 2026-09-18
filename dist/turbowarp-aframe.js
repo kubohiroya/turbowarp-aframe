@@ -652,17 +652,8 @@
   		}
   	]
   };
-  //#endregion
-  //#region src/runtime-capability.ts
-  var supportedRuntimeCapabilityVersions = Object.freeze([1, 2]);
   var runtimeCapabilityKey = "turbowarpAFrameCapability";
   function createRuntimeCapability(scene, assertActive) {
-  	function requireVersion(version) {
-  		assertActive();
-  		if (version === 1) return v1;
-  		if (version === 2) return v2;
-  		throw new Error(`Unsupported A-Frame runtime capability version: ${version}; supported versions are ${supportedRuntimeCapabilityVersions.join(", ")}.`);
-  	}
   	const scenePort = {
   		loadTemplate(id, source) {
   			assertActive();
@@ -711,22 +702,17 @@
   			return scene.vrmStatus(selector);
   		}
   	};
-  	const negotiation = {
-  		supportedVersions: supportedRuntimeCapabilityVersions,
-  		requireVersion
-  	};
-  	const v1 = Object.freeze({
-  		version: 1,
-  		...negotiation,
-  		...scenePort
-  	});
-  	const v2 = Object.freeze({
+  	const capability = Object.freeze({
   		version: 2,
-  		...negotiation,
+  		requireVersion(version) {
+  			assertActive();
+  			if (version !== 2) throw new Error(`Unsupported A-Frame runtime capability version: ${version}; supported version is 2.`);
+  			return capability;
+  		},
   		...scenePort,
   		...vrmPort
   	});
-  	return v1;
+  	return capability;
   }
   //#endregion
   //#region \0virtual:three-vrm-factory

@@ -4,7 +4,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest';
 import {createThreeVrm} from 'virtual:three-vrm-factory';
 import {createTestVrm} from '../scripts/generate-test-vrm.js';
 import {TurboWarpAFrameExtension} from '../src/extension.js';
-import {runtimeCapabilityKey, type AFrameRuntimeCapabilityV1} from '../src/runtime-capability.js';
+import {runtimeCapabilityKey, type AFrameRuntimeCapabilityV2} from '../src/runtime-capability.js';
 import {VrmAvatars, type VrmThreeApi} from '../src/vrm.js';
 
 // Three.js reports download progress with ProgressEvent, which Node does not have.
@@ -164,7 +164,7 @@ function runtimeId(): string {
   return [...(runtimes?.keys() ?? [])].at(-1) ?? '';
 }
 
-describe('capability v2 on the A-Frame Three.js', () => {
+describe('the capability on the A-Frame Three.js', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -174,7 +174,7 @@ describe('capability v2 on the A-Frame Three.js', () => {
     const extension = new TurboWarpAFrameExtension();
     extension.createScene({LAYER: 'above-stage', MODE: '3d'});
     extension.createNode({TYPE: 'empty', ID: 'avatar', PARENT: '#scene'});
-    const capability = (Scratch.vm?.runtime ?? {})[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+    const capability = (Scratch.vm?.runtime ?? {})[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
     const v2 = capability.requireVersion(2);
 
     const loading = v2.loadVrm(vrmUrl, '#avatar');

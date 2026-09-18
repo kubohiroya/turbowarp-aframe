@@ -3,7 +3,6 @@ import {TurboWarpAFrameExtension} from '../src/extension.js';
 import {
   runtimeCapabilityKey,
   runtimeCapabilityVersion,
-  type AFrameRuntimeCapabilityV1,
   type AFrameRuntimeCapabilityV2
 } from '../src/runtime-capability.js';
 
@@ -122,10 +121,12 @@ describe('TurboWarpAFrameExtension', () => {
   it('publishes a versioned scene capability that shares block behavior', () => {
     const extension = new TurboWarpAFrameExtension();
     const runtime = Scratch.vm?.runtime ?? {};
-    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
 
     expect(capability.version).toBe(runtimeCapabilityVersion);
-    expect(capability.requireVersion(1)).toBe(capability);
+    expect(capability.version).toBe(2);
+    expect(capability.requireVersion(2)).toBe(capability);
+    expect(Object.isFrozen(capability)).toBe(true);
     capability.loadTemplate(
       'actor',
       JSON.stringify({type: 'group', class: 'actor', children: [{type: 'sphere', id: 'head'}]})
@@ -149,48 +150,38 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.countSelector({SELECTOR: '.actor'})).toBe(0);
   });
 
-  it('keeps version 1 at the runtime key and reaches version 2 through requireVersion', async () => {
+  it('adds VRM operations to the capability', async () => {
     const extension = new TurboWarpAFrameExtension();
     const runtime = Scratch.vm?.runtime ?? {};
-    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
-
-    expect(capability.version).toBe(1);
-    expect(capability.supportedVersions).toEqual([1, 2]);
-    expect('loadVrm' in capability).toBe(false);
-
-    const v2: AFrameRuntimeCapabilityV2 = capability.requireVersion(2);
-    expect(v2.version).toBe(2);
-    expect(v2.requireVersion(1)).toBe(capability);
-    expect(v2.requireVersion(2)).toBe(v2);
-    expect(Object.isFrozen(v2)).toBe(true);
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
 
     extension.createNode({TYPE: 'empty', ID: 'avatar', PARENT: '#scene'});
-    expect(v2.countSelector('#avatar')).toBe(1);
-    expect(v2.vrmStatus('#avatar')).toEqual({state: 'none', error: ''});
-    expect(v2.vrmBoneNames('#avatar')).toEqual([]);
-    expect(() => v2.setVrmBoneRotation('#avatar', 'hips', 0, 0, 0)).not.toThrow();
-    await expect(v2.loadVrm('avatar.vrm', '#missing')).rejects.toThrow(
+    expect(capability.vrmStatus('#avatar')).toEqual({state: 'none', error: ''});
+    expect(capability.vrmBoneNames('#avatar')).toEqual([]);
+    expect(() => capability.setVrmBoneRotation('#avatar', 'hips', 0, 0, 0)).not.toThrow();
+    await expect(capability.loadVrm('avatar.vrm', '#missing')).rejects.toThrow(
       'No A-Frame node matches: #missing'
     );
   });
 
-  it('rejects unsupported capability versions and calls after dispose', async () => {
+  it('rejects every version but 2, and calls after dispose', async () => {
     const extension = new TurboWarpAFrameExtension();
     const runtime = Scratch.vm?.runtime ?? {};
-    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV1;
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
 
-    expect(() => capability.requireVersion(3)).toThrow(
-      'Unsupported A-Frame runtime capability version: 3; supported versions are 1, 2.'
-    );
-    const v2 = capability.requireVersion(2);
+    for (const version of [1, 3]) {
+      expect(() => capability.requireVersion(version)).toThrow(
+        `Unsupported A-Frame runtime capability version: ${version}; supported version is 2.`
+      );
+    }
 
     extension.dispose();
 
     expect(runtime[runtimeCapabilityKey]).toBeUndefined();
     expect(() => capability.countSelector('*')).toThrow('A-Frame runtime capability is disposed.');
-    expect(() => capability.requireVersion(1)).toThrow('A-Frame runtime capability is disposed.');
-    expect(() => v2.vrmStatus('#avatar')).toThrow('A-Frame runtime capability is disposed.');
-    await expect(v2.loadVrm('avatar.vrm', '#avatar')).rejects.toThrow(
+    expect(() => capability.requireVersion(2)).toThrow('A-Frame runtime capability is disposed.');
+    expect(() => capability.vrmStatus('#avatar')).toThrow('A-Frame runtime capability is disposed.');
+    await expect(capability.loadVrm('avatar.vrm', '#avatar')).rejects.toThrow(
       'A-Frame runtime capability is disposed.'
     );
     expect(() => extension.dispose()).not.toThrow();

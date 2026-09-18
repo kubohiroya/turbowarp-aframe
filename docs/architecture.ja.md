@@ -24,11 +24,11 @@ src/config.ts + src/block-definitions.json
 
 ## version付きruntime capability
 
-機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 1は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`だけを持つ狭い型付きportです。version 2は、version 1に`loadVrm`、`setVrmBoneRotation`、`vrmBoneNames`、`vrmStatus`を加えたものです。既存のconsumerが`version === 1`を確かめるため、runtimeのキーに置くオブジェクトはversion 1のままにし、`requireVersion(2)`でversion 2のオブジェクトを返します。2つのオブジェクトは互いへversionを切り替えられ、どちらもfreezeされています。
+機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 2は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`に、`loadVrm`、`setVrmBoneRotation`、`vrmBoneNames`、`vrmStatus`を加えた、freezeされた狭い型付きportです。scene操作だけを持っていたversion 1は、version 2と並べて残さず0.4.0で撤去しました。正しく保つ契約を1つにするためです。
 
 各port methodは対応するblock handlerへ委譲します。そのため、block呼び出しと複合機能拡張からの呼び出しは、cast、validation、selector matching、event queue、機能拡張所有のscene stateを共有します。portはDOM element、A-Frame／Three.js object、glTF内部実装を公開しません。
 
-consumerは利用前に`requireVersion(1)`または`requireVersion(2)`を呼ぶ必要があります。未対応versionは互換fallbackを試さず例外になります。`dispose()`はruntimeからcapabilityを削除し、実行中のanimation playbackを停止し、scene hostを除去して、dispose前にconsumerが保持した参照も恒久的に無効化します。disposeの反復呼び出しは安全です。
+consumerは利用前に`requireVersion(2)`を呼ぶ必要があります。1を含むそれ以外のversionは、互換fallbackを試さず例外になります。`dispose()`はruntimeからcapabilityを削除し、実行中のanimation playbackを停止し、scene hostを除去して、dispose前にconsumerが保持した参照も恒久的に無効化します。disposeの反復呼び出しは安全です。
 
 ## シーン初期化
 

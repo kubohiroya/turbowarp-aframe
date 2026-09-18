@@ -1,13 +1,6 @@
-/**
- * The version of the object published at `runtime.turbowarpAFrameCapability`. It stays 1 so
- * consumers that check `version === 1` keep working; later versions are reached through
- * `requireVersion`.
- */
-export const runtimeCapabilityVersion = 1 as const;
-export const supportedRuntimeCapabilityVersions = Object.freeze([1, 2] as const);
+/** The only capability version this build provides; any other requested version is refused. */
+export const runtimeCapabilityVersion = 2 as const;
 export const runtimeCapabilityKey = 'turbowarpAFrameCapability';
-
-export type SupportedRuntimeCapabilityVersion = (typeof supportedRuntimeCapabilityVersions)[number];
 
 export interface AFrameScenePort {
   loadTemplate(id: string, source: string): void;
@@ -35,37 +28,15 @@ export interface AFrameVrmPort {
   vrmStatus(selector: string): AFrameVrmStatus;
 }
 
-interface VersionNegotiation {
-  readonly supportedVersions: readonly SupportedRuntimeCapabilityVersion[];
-  requireVersion(version: 1): AFrameRuntimeCapabilityV1;
-  requireVersion(version: 2): AFrameRuntimeCapabilityV2;
-  requireVersion(version: number): AFrameRuntimeCapabilityV1 | AFrameRuntimeCapabilityV2;
-}
-
-export interface AFrameRuntimeCapabilityV1 extends AFrameScenePort, VersionNegotiation {
-  readonly version: 1;
-}
-
-export interface AFrameRuntimeCapabilityV2 extends AFrameScenePort, AFrameVrmPort, VersionNegotiation {
-  readonly version: 2;
+export interface AFrameRuntimeCapabilityV2 extends AFrameScenePort, AFrameVrmPort {
+  readonly version: typeof runtimeCapabilityVersion;
+  requireVersion(version: number): AFrameRuntimeCapabilityV2;
 }
 
 export function createRuntimeCapability(
   scene: AFrameScenePort & AFrameVrmPort,
   assertActive: () => void
-): AFrameRuntimeCapabilityV1 {
-  function requireVersion(version: 1): AFrameRuntimeCapabilityV1;
-  function requireVersion(version: 2): AFrameRuntimeCapabilityV2;
-  function requireVersion(version: number): AFrameRuntimeCapabilityV1 | AFrameRuntimeCapabilityV2;
-  function requireVersion(version: number): AFrameRuntimeCapabilityV1 | AFrameRuntimeCapabilityV2 {
-    assertActive();
-    if (version === 1) return v1;
-    if (version === 2) return v2;
-    throw new Error(
-      `Unsupported A-Frame runtime capability version: ${version}; supported versions are ${supportedRuntimeCapabilityVersions.join(', ')}.`
-    );
-  }
-
+): AFrameRuntimeCapabilityV2 {
   const scenePort: AFrameScenePort = {
     loadTemplate(id, source) {
       assertActive();
@@ -116,17 +87,19 @@ export function createRuntimeCapability(
     }
   };
 
-  const negotiation = {supportedVersions: supportedRuntimeCapabilityVersions, requireVersion};
-  const v1: AFrameRuntimeCapabilityV1 = Object.freeze({
-    version: 1 as const,
-    ...negotiation,
-    ...scenePort
-  });
-  const v2: AFrameRuntimeCapabilityV2 = Object.freeze({
-    version: 2 as const,
-    ...negotiation,
+  const capability: AFrameRuntimeCapabilityV2 = Object.freeze({
+    version: runtimeCapabilityVersion,
+    requireVersion(version: number) {
+      assertActive();
+      if (version !== runtimeCapabilityVersion) {
+        throw new Error(
+          `Unsupported A-Frame runtime capability version: ${version}; supported version is ${runtimeCapabilityVersion}.`
+        );
+      }
+      return capability;
+    },
     ...scenePort,
     ...vrmPort
   });
-  return v1;
+  return capability;
 }

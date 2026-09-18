@@ -3,7 +3,7 @@ import definitions from './block-definitions.json';
 import {
   createRuntimeCapability,
   runtimeCapabilityKey,
-  type AFrameRuntimeCapabilityV1,
+  type AFrameRuntimeCapabilityV2,
   type AFrameVrmStatus
 } from './runtime-capability.js';
 import {VrmAvatars, type VrmThreeApi} from './vrm.js';
@@ -142,7 +142,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private rootElement: Element | null = null;
   private sceneReadyPending = false;
   private lastEvent: SceneEvent | null = null;
-  private readonly runtimeCapability: AFrameRuntimeCapabilityV1;
+  private readonly runtimeCapability: AFrameRuntimeCapabilityV2;
   private disposed = false;
   private readonly vrms = new VrmAvatars(() => this.getThree() as unknown as VrmThreeApi | null);
 
