@@ -26,6 +26,9 @@ export interface AFrameVrmPort {
   setVrmBoneRotation(selector: string, bone: string, x: number, y: number, z: number): void;
   vrmBoneNames(selector: string): string[];
   vrmStatus(selector: string): AFrameVrmStatus;
+  /** Weight from 0 through 1, clamped, of a preset or custom VRM expression. */
+  setVrmExpression(selector: string, name: string, weight: number): void;
+  vrmExpressionNames(selector: string): string[];
 }
 
 export interface AFrameRuntimeCapabilityV2 extends AFrameScenePort, AFrameVrmPort {
@@ -84,6 +87,14 @@ export function createRuntimeCapability(
     vrmStatus(selector) {
       assertActive();
       return scene.vrmStatus(selector);
+    },
+    setVrmExpression(selector, name, weight) {
+      assertActive();
+      scene.setVrmExpression(selector, name, weight);
+    },
+    vrmExpressionNames(selector) {
+      assertActive();
+      return scene.vrmExpressionNames(selector);
     }
   };
 

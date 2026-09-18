@@ -74,6 +74,54 @@ describe('three-vrm on the A-Frame Three.js', () => {
     expect(after.y).toBeCloseTo(shoulder.y - 0.5, 5);
   });
 
+  it('lists preset and custom expressions', async () => {
+    const {avatars} = await loaded();
+    expect(avatars.expressionNames('avatar').sort()).toEqual(['glow', 'happy']);
+    expect(avatars.expressionNames('other')).toEqual([]);
+  });
+
+  it('drives a morph target expression on update, clamping its weight', async () => {
+    const {avatars, root} = await loaded();
+    const head = root.getObjectByName('head_box') as THREE.Mesh;
+    expect(head.morphTargetInfluences).toEqual([0]);
+
+    avatars.setExpression('avatar', 'happy', 0.4);
+    expect(head.morphTargetInfluences?.[0]).toBe(0);
+    avatars.update(0);
+    expect(head.morphTargetInfluences?.[0]).toBeCloseTo(0.4, 6);
+
+    avatars.setExpression('avatar', 'happy', 1.7);
+    avatars.update(0);
+    expect(head.morphTargetInfluences?.[0]).toBeCloseTo(1, 6);
+    avatars.setExpression('avatar', 'happy', -0.3);
+    avatars.update(0);
+    expect(head.morphTargetInfluences?.[0]).toBeCloseTo(0, 6);
+  });
+
+  it('drives a material colour expression on update', async () => {
+    const {avatars, root} = await loaded();
+    const material = (root.getObjectByName('head_box') as THREE.Mesh)
+      .material as THREE.MeshStandardMaterial;
+    const rest = material.color.toArray();
+
+    avatars.setExpression('avatar', 'glow', 1);
+    avatars.update(0);
+    expect(material.color.r).toBeCloseTo(1, 5);
+    expect(material.color.g).toBeCloseTo(0.8, 5);
+    expect(material.color.b).toBeCloseTo(0.2, 5);
+
+    avatars.setExpression('avatar', 'glow', 0);
+    avatars.update(0);
+    material.color.toArray().forEach((value, index) => expect(value).toBeCloseTo(rest[index] ?? NaN, 5));
+  });
+
+  it('rejects an expression the model does not have and a weight that is not a number', async () => {
+    const {avatars} = await loaded();
+    expect(() => avatars.setExpression('avatar', 'angry', 1)).toThrow(/no expression: angry/u);
+    expect(() => avatars.setExpression('avatar', 'happy', Number.NaN)).toThrow(/must be a number/u);
+    expect(() => avatars.setExpression('other', 'happy', 1)).toThrow(/other is not loaded/u);
+  });
+
   it('rejects a bone the model does not have', async () => {
     const {avatars} = await loaded();
     expect(() => avatars.setBoneRotation('avatar', 'leftThumbProximal', {x: 0, y: 0, z: 0})).toThrow(
@@ -193,6 +241,13 @@ describe('the capability on the A-Frame Three.js', () => {
     expect(worldPosition(scene, 'leftHand').y).toBeCloseTo(0.85, 5);
 
     expect(() => v2.setVrmBoneRotation('#avatar', 'tail', 0, 0, 0)).toThrow(/no humanoid bone: tail/u);
+
+    expect(v2.vrmExpressionNames('#avatar').sort()).toEqual(['glow', 'happy']);
+    v2.setVrmExpression('#avatar', 'happy', 0.5);
+    tick[0]?.(16, 16);
+    const head = scene.getObjectByName('head_box') as THREE.Mesh;
+    expect(head.morphTargetInfluences?.[0]).toBeCloseTo(0.5, 6);
+    expect(() => v2.setVrmExpression('#avatar', 'sad', 1)).toThrow(/no expression: sad/u);
     v2.deleteSelector('#avatar');
     expect(v2.vrmStatus('#avatar')).toEqual({state: 'none', error: ''});
     expect(scene.getObjectByName('leftHand')).toBeUndefined();

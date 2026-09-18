@@ -45,10 +45,12 @@ interface AFrameRuntimeCapabilityV2 {
   setVrmBoneRotation(selector: string, bone: string, x: number, y: number, z: number): void;
   vrmBoneNames(selector: string): string[];
   vrmStatus(selector: string): {state: 'none' | 'loading' | 'ready' | 'error'; error: string};
+  setVrmExpression(selector: string, name: string, weight: number): void;
+  vrmExpressionNames(selector: string): string[];
 }
 ```
 
-Besides the scene operations, version 2 carries VRM avatars. `loadVrm` loads the model onto the first node matching the selector with three-vrm, running on the Three.js that A-Frame loaded, and resolves when it is ready. `setVrmBoneRotation` sets Euler degrees on a normalized humanoid bone such as `leftUpperArm`, relative to the T-pose, so the same rotation means the same thing on every VRM; the scene tick applies it to the model's own bones. Nodes whose VRM is not ready are skipped, and an unknown bone name throws.
+Besides the scene operations, version 2 carries VRM avatars. `loadVrm` loads the model onto the first node matching the selector with three-vrm, running on the Three.js that A-Frame loaded, and resolves when it is ready. `setVrmBoneRotation` sets Euler degrees on a normalized humanoid bone such as `leftUpperArm`, relative to the T-pose, so the same rotation means the same thing on every VRM; the scene tick applies it to the model's own bones. Nodes whose VRM is not ready are skipped, and an unknown bone name throws. `setVrmExpression` sets the weight of a preset expression such as `happy`, `blink`, or `aa`, or of a custom one, clamped to 0 through 1 as three-vrm does, and the scene tick applies it; `vrmExpressionNames` lists the names the model has, and an unknown name throws.
 
 The capability deliberately exposes declarative templates, selectors, and humanoid bone names, not private DOM nodes, A-Frame objects, Three.js objects, or glTF internals. Unsupported versions fail closed. A retained capability reference also rejects every operation after the extension is disposed.
 
@@ -463,6 +465,28 @@ Returns the humanoid bone names of the first matching node's VRM as a JSON array
 |---|---|
 | Type | Reporter |
 | Opcode | `vrmBoneNames` |
+| `SELECTOR` | String, default: `#avatar` |
+
+### `set VRM [SELECTOR] expression [NAME] to [WEIGHT]`
+
+Sets the weight, clamped to 0 through 1, of a preset or custom VRM expression such as happy or blink on every matching node whose VRM is ready.
+
+| Property | Value |
+|---|---|
+| Type | Command |
+| Opcode | `setVrmExpression` |
+| `SELECTOR` | String, default: `#avatar` |
+| `NAME` | String, default: `happy` |
+| `WEIGHT` | Number, default: `1` |
+
+### `VRM [SELECTOR] expressions`
+
+Returns the preset and custom expression names of the first matching node's VRM as a JSON array.
+
+| Property | Value |
+|---|---|
+| Type | Reporter |
+| Opcode | `vrmExpressionNames` |
 | `SELECTOR` | String, default: `#avatar` |
 
 ### `VRM [SELECTOR] state`

@@ -24,7 +24,7 @@ The generated JavaScript bundle is an unsandboxed TurboWarp extension. The manif
 
 ## Versioned Runtime Capability
 
-The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 2 is a narrow typed, frozen port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`, plus `loadVrm`, `setVrmBoneRotation`, `vrmBoneNames`, and `vrmStatus`. Version 1, which had only the scene operations, was removed in 0.4.0 rather than kept beside version 2, so there is a single contract to keep correct.
+The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 2 is a narrow typed, frozen port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`, plus `loadVrm`, `setVrmBoneRotation`, `vrmBoneNames`, `vrmStatus`, `setVrmExpression`, and `vrmExpressionNames`. The expression operations were added to version 2 without changing its version, because they only add methods and a consumer checks for the methods it uses. Version 1, which had only the scene operations, was removed in 0.4.0 rather than kept beside version 2, so there is a single contract to keep correct.
 
 Each port method delegates to the corresponding block handler. Consequently, block calls and composite-extension calls share casting, validation, selector matching, event queuing, and the extension-owned scene state. The port never exposes DOM elements, A-Frame/Three.js objects, or glTF internals.
 

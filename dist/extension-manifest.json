@@ -520,6 +520,24 @@
       ]
     },
     {
+      "opcode": "setVrmExpression",
+      "blockType": "COMMAND",
+      "arguments": [
+        {
+          "id": "NAME",
+          "type": "STRING"
+        },
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        },
+        {
+          "id": "WEIGHT",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
       "opcode": "stopAnimationClip",
       "blockType": "COMMAND",
       "arguments": [
@@ -535,6 +553,16 @@
     },
     {
       "opcode": "vrmBoneNames",
+      "blockType": "REPORTER",
+      "arguments": [
+        {
+          "id": "SELECTOR",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "opcode": "vrmExpressionNames",
       "blockType": "REPORTER",
       "arguments": [
         {

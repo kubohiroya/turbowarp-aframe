@@ -24,7 +24,7 @@ src/config.ts + src/block-definitions.json
 
 ## version付きruntime capability
 
-機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 2は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`に、`loadVrm`、`setVrmBoneRotation`、`vrmBoneNames`、`vrmStatus`を加えた、freezeされた狭い型付きportです。scene操作だけを持っていたversion 1は、version 2と並べて残さず0.4.0で撤去しました。正しく保つ契約を1つにするためです。
+機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 2は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`に、`loadVrm`、`setVrmBoneRotation`、`vrmBoneNames`、`vrmStatus`、`setVrmExpression`、`vrmExpressionNames`を加えた、freezeされた狭い型付きportです。scene操作だけを持っていたversion 1は、version 2と並べて残さず0.4.0で撤去しました。正しく保つ契約を1つにするためです。表情の操作は、methodを加えるだけでconsumerは使うmethodの有無を確かめるため、versionを変えずにversion 2へ加えました。
 
 各port methodは対応するblock handlerへ委譲します。そのため、block呼び出しと複合機能拡張からの呼び出しは、cast、validation、selector matching、event queue、機能拡張所有のscene stateを共有します。portはDOM element、A-Frame／Three.js object、glTF内部実装を公開しません。
 
