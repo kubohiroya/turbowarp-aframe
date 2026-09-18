@@ -4,6 +4,9 @@ import {writeFile} from 'node:fs/promises';
  * Writes a minimal VRM 1.0 humanoid for tests and the VRM demo: the required humanoid
  * bones, facing +Z in a T-pose, each drawn as a box. It is generated here so the
  * repository carries no third-party model or its licence.
+ *
+ * It carries one expression of each kind of bind: the preset `happy` widens the head
+ * through a morph target, and the custom `glow` turns the head colour.
  */
 
 type Vec3 = [number, number, number];
@@ -41,6 +44,7 @@ export function createTestVrm(): Uint8Array {
     boneIndex.set(name, nodes.length);
     nodes.push({name, translation: offset, children: []});
   }
+  let headBox = -1;
   for (const {name, parent, box} of bones) {
     const boneNode = nodes[boneIndex.get(name) as number] as {children: number[]};
     if (parent !== null) {
@@ -49,7 +53,13 @@ export function createTestVrm(): Uint8Array {
       );
     }
     boneNode.children.push(nodes.length);
-    nodes.push({name: `${name}_box`, mesh: 0, translation: box.center, scale: box.size});
+    if (name === 'head') headBox = nodes.length;
+    nodes.push({
+      name: `${name}_box`,
+      mesh: name === 'head' ? 1 : 0,
+      translation: box.center,
+      scale: box.size
+    });
   }
   const rootNode = nodes.length;
   nodes.push({name: 'root', children: [boneIndex.get('hips')]});
@@ -62,8 +72,20 @@ export function createTestVrm(): Uint8Array {
     scene: 0,
     scenes: [{nodes: [rootNode]}],
     nodes,
-    meshes: [{primitives: [{attributes: {POSITION: 0, NORMAL: 1}, indices: 2, material: 0}]}],
-    materials: [{pbrMetallicRoughness: {baseColorFactor: [0.35, 0.6, 0.95, 1], metallicFactor: 0}}],
+    meshes: [
+      {primitives: [{attributes: {POSITION: 0, NORMAL: 1}, indices: 2, material: 0}]},
+      {
+        primitives: [
+          {attributes: {POSITION: 0, NORMAL: 1}, indices: 2, material: 1, targets: [{POSITION: 3}]}
+        ],
+        weights: [0],
+        extras: {targetNames: ['widen']}
+      }
+    ],
+    materials: [
+      {pbrMetallicRoughness: {baseColorFactor: [0.35, 0.6, 0.95, 1], metallicFactor: 0}},
+      {pbrMetallicRoughness: {baseColorFactor: [0.95, 0.85, 0.75, 1], metallicFactor: 0}}
+    ],
     accessors,
     bufferViews,
     buffers: [{byteLength: bin.byteLength}],
@@ -80,7 +102,13 @@ export function createTestVrm(): Uint8Array {
           allowRedistribution: true,
           modification: 'allowModificationRedistribution'
         },
-        humanoid: {humanBones}
+        humanoid: {humanBones},
+        expressions: {
+          preset: {happy: {morphTargetBinds: [{node: headBox, index: 0, weight: 1}]}},
+          custom: {
+            glow: {materialColorBinds: [{material: 1, type: 'color', targetValue: [1, 0.8, 0.2, 1]}]}
+          }
+        }
       }
     }
   };
@@ -103,21 +131,27 @@ function cubeBuffers() {
   const positions = new Float32Array(faces.flatMap(({corners}) => corners.flat().map((v) => v / 2)));
   const normals = new Float32Array(faces.flatMap(({normal}) => [normal, normal, normal, normal].flat()));
   const indices = new Uint16Array(faces.flatMap((_, face) => [0, 1, 2, 0, 2, 3].map((i) => face * 4 + i)));
-  const bin = new Uint8Array(positions.byteLength + normals.byteLength + indices.byteLength);
+  // The `widen` morph target makes the box half as wide again.
+  const widen = new Float32Array(positions.map((value, index) => (index % 3 === 0 ? value / 2 : 0)));
+  const widenOffset = positions.byteLength * 2 + indices.byteLength;
+  const bin = new Uint8Array(widenOffset + widen.byteLength);
   bin.set(new Uint8Array(positions.buffer), 0);
   bin.set(new Uint8Array(normals.buffer), positions.byteLength);
   bin.set(new Uint8Array(indices.buffer), positions.byteLength * 2);
+  bin.set(new Uint8Array(widen.buffer), widenOffset);
   return {
     bin,
     bufferViews: [
       {buffer: 0, byteOffset: 0, byteLength: positions.byteLength, target: 34962},
       {buffer: 0, byteOffset: positions.byteLength, byteLength: normals.byteLength, target: 34962},
-      {buffer: 0, byteOffset: positions.byteLength * 2, byteLength: indices.byteLength, target: 34963}
+      {buffer: 0, byteOffset: positions.byteLength * 2, byteLength: indices.byteLength, target: 34963},
+      {buffer: 0, byteOffset: widenOffset, byteLength: widen.byteLength, target: 34962}
     ],
     accessors: [
       {bufferView: 0, componentType: 5126, count: 24, type: 'VEC3', min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5]},
       {bufferView: 1, componentType: 5126, count: 24, type: 'VEC3'},
-      {bufferView: 2, componentType: 5123, count: 36, type: 'SCALAR'}
+      {bufferView: 2, componentType: 5123, count: 36, type: 'SCALAR'},
+      {bufferView: 3, componentType: 5126, count: 24, type: 'VEC3', min: [-0.25, 0, 0], max: [0.25, 0, 0]}
     ]
   };
 }

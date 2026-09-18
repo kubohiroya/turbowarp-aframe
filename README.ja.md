@@ -45,10 +45,12 @@ interface AFrameRuntimeCapabilityV2 {
   setVrmBoneRotation(selector: string, bone: string, x: number, y: number, z: number): void;
   vrmBoneNames(selector: string): string[];
   vrmStatus(selector: string): {state: 'none' | 'loading' | 'ready' | 'error'; error: string};
+  setVrmExpression(selector: string, name: string, weight: number): void;
+  vrmExpressionNames(selector: string): string[];
 }
 ```
 
-version 2は、scene操作に加えてVRMアバターを扱います。`loadVrm`は、A-Frameが読み込んだThree.jsの上でthree-vrmを動かし、selectorに最初に一致したnodeへモデルを読み込んで、準備ができると解決します。`setVrmBoneRotation`は、`leftUpperArm`などの正規化されたヒューマノイドのボーンへ、Tポーズからの回転を度のEuler角で設定します。どのVRMでも同じ回転が同じ意味になり、sceneのtickがモデル本来のボーンへ反映します。VRMの準備ができていないnodeは飛ばし、存在しないボーン名は例外になります。
+version 2は、scene操作に加えてVRMアバターを扱います。`loadVrm`は、A-Frameが読み込んだThree.jsの上でthree-vrmを動かし、selectorに最初に一致したnodeへモデルを読み込んで、準備ができると解決します。`setVrmBoneRotation`は、`leftUpperArm`などの正規化されたヒューマノイドのボーンへ、Tポーズからの回転を度のEuler角で設定します。どのVRMでも同じ回転が同じ意味になり、sceneのtickがモデル本来のボーンへ反映します。VRMの準備ができていないnodeは飛ばし、存在しないボーン名は例外になります。`setVrmExpression`は、`happy`、`blink`、`aa`などのプリセットまたはカスタムの表情の重みを、three-vrmと同じく0〜1に丸めて設定し、sceneのtickが反映します。`vrmExpressionNames`はモデルが持つ表情名を返し、存在しない名前は例外になります。
 
 このcapabilityが公開するのは宣言的template、selector、ヒューマノイドのボーン名だけです。private DOM node、A-Frame object、Three.js object、glTF内部実装は公開しません。未対応versionはfail closedし、機能拡張のdispose後に保持されたcapabilityを呼び出した場合も、すべて明示的に拒否します。
 

@@ -166,7 +166,10 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
         setVrmBoneRotation: (selector, bone, x, y, z) =>
           this.setVrmBoneRotation({SELECTOR: selector, BONE: bone, X: x, Y: y, Z: z}),
         vrmBoneNames: (selector) => this.vrmBoneNamesFor(Scratch.Cast.toString(selector)),
-        vrmStatus: (selector) => this.vrmStatusFor(Scratch.Cast.toString(selector))
+        vrmStatus: (selector) => this.vrmStatusFor(Scratch.Cast.toString(selector)),
+        setVrmExpression: (selector, name, weight) =>
+          this.setVrmExpression({SELECTOR: selector, NAME: name, WEIGHT: weight}),
+        vrmExpressionNames: (selector) => this.vrmExpressionNamesFor(Scratch.Cast.toString(selector))
       },
       () => this.assertActive()
     );
@@ -544,6 +547,19 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
       if (this.vrms.state(node.id) !== 'ready') continue;
       this.vrms.setBoneRotation(node.id, bone, rotation);
     }
+  }
+
+  public setVrmExpression(args: {SELECTOR: unknown; NAME: unknown; WEIGHT: unknown}): void {
+    const name = Scratch.Cast.toString(args.NAME).trim();
+    const weight = Scratch.Cast.toNumber(args.WEIGHT);
+    for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+      if (this.vrms.state(node.id) !== 'ready') continue;
+      this.vrms.setExpression(node.id, name, weight);
+    }
+  }
+
+  public vrmExpressionNames(args: {SELECTOR: unknown}): string {
+    return JSON.stringify(this.vrmExpressionNamesFor(Scratch.Cast.toString(args.SELECTOR)));
   }
 
   public vrmBoneNames(args: {SELECTOR: unknown}): string {
@@ -1095,6 +1111,11 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private vrmBoneNamesFor(selector: string): string[] {
     const node = this.firstMatch(selector);
     return node === undefined ? [] : this.vrms.boneNames(node.id);
+  }
+
+  private vrmExpressionNamesFor(selector: string): string[] {
+    const node = this.firstMatch(selector);
+    return node === undefined ? [] : this.vrms.expressionNames(node.id);
   }
 
   private vrmStatusFor(selector: string): AFrameVrmStatus {

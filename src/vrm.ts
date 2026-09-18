@@ -22,6 +22,11 @@ export interface VrmLike {
     humanBones: Record<string, unknown>;
     getNormalizedBoneNode(name: string): BoneLike | null;
   };
+  expressionManager?: {
+    expressions: ReadonlyArray<{expressionName: string}>;
+    getExpression(name: string): unknown;
+    setValue(name: string, weight: number): void;
+  };
   update(deltaSeconds: number): void;
 }
 
@@ -84,6 +89,26 @@ export class VrmAvatars {
     if (node === null) throw new Error(`VRM ${nodeId} has no humanoid bone: ${bone}`);
     const {degToRad} = this.requireThree().MathUtils;
     node.rotation.set(degToRad(degrees.x), degToRad(degrees.y), degToRad(degrees.z));
+  }
+
+  /**
+   * Sets an expression's weight. The weight is clamped to 0 through 1, as three-vrm does, and
+   * the scene tick applies it with the other expressions.
+   */
+  public setExpression(nodeId: string, name: string, weight: number): void {
+    if (!Number.isFinite(weight)) throw new Error(`VRM expression weight must be a number: ${weight}`);
+    const vrm = this.requireVrm(nodeId);
+    const expressions = vrm.expressionManager;
+    if (expressions === undefined) throw new Error(`VRM ${nodeId} has no expressions.`);
+    if (expressions.getExpression(name) == null) {
+      throw new Error(`VRM ${nodeId} has no expression: ${name}`);
+    }
+    expressions.setValue(name, Math.min(Math.max(weight, 0), 1));
+  }
+
+  public expressionNames(nodeId: string): string[] {
+    const expressions = this.entries.get(nodeId)?.vrm?.expressionManager?.expressions ?? [];
+    return expressions.map((expression) => expression.expressionName);
   }
 
   public boneNames(nodeId: string): string[] {

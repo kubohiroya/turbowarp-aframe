@@ -159,6 +159,9 @@ describe('TurboWarpAFrameExtension', () => {
     expect(capability.vrmStatus('#avatar')).toEqual({state: 'none', error: ''});
     expect(capability.vrmBoneNames('#avatar')).toEqual([]);
     expect(() => capability.setVrmBoneRotation('#avatar', 'hips', 0, 0, 0)).not.toThrow();
+    expect(capability.vrmExpressionNames('#avatar')).toEqual([]);
+    expect(() => capability.setVrmExpression('#avatar', 'happy', 1)).not.toThrow();
+    expect(extension.vrmExpressionNames({SELECTOR: '#missing'})).toBe('[]');
     await expect(capability.loadVrm('avatar.vrm', '#missing')).rejects.toThrow(
       'No A-Frame node matches: #missing'
     );
@@ -181,6 +184,9 @@ describe('TurboWarpAFrameExtension', () => {
     expect(() => capability.countSelector('*')).toThrow('A-Frame runtime capability is disposed.');
     expect(() => capability.requireVersion(2)).toThrow('A-Frame runtime capability is disposed.');
     expect(() => capability.vrmStatus('#avatar')).toThrow('A-Frame runtime capability is disposed.');
+    expect(() => capability.setVrmExpression('#avatar', 'happy', 1)).toThrow(
+      'A-Frame runtime capability is disposed.'
+    );
     await expect(capability.loadVrm('avatar.vrm', '#avatar')).rejects.toThrow(
       'A-Frame runtime capability is disposed.'
     );

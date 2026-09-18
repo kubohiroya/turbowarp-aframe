@@ -641,6 +641,36 @@
   			} }
   		},
   		{
+  			"opcode": "setVrmExpression",
+  			"blockType": "COMMAND",
+  			"text": "set VRM [SELECTOR] expression [NAME] to [WEIGHT]",
+  			"description": "Sets the weight, clamped to 0 through 1, of a preset or custom VRM expression such as happy or blink on every matching node whose VRM is ready.",
+  			"arguments": {
+  				"SELECTOR": {
+  					"type": "STRING",
+  					"defaultValue": "#avatar"
+  				},
+  				"NAME": {
+  					"type": "STRING",
+  					"defaultValue": "happy"
+  				},
+  				"WEIGHT": {
+  					"type": "NUMBER",
+  					"defaultValue": 1
+  				}
+  			}
+  		},
+  		{
+  			"opcode": "vrmExpressionNames",
+  			"blockType": "REPORTER",
+  			"text": "VRM [SELECTOR] expressions",
+  			"description": "Returns the preset and custom expression names of the first matching node's VRM as a JSON array.",
+  			"arguments": { "SELECTOR": {
+  				"type": "STRING",
+  				"defaultValue": "#avatar"
+  			} }
+  		},
+  		{
   			"opcode": "vrmState",
   			"blockType": "REPORTER",
   			"text": "VRM [SELECTOR] state",
@@ -700,6 +730,14 @@
   		vrmStatus(selector) {
   			assertActive();
   			return scene.vrmStatus(selector);
+  		},
+  		setVrmExpression(selector, name, weight) {
+  			assertActive();
+  			scene.setVrmExpression(selector, name, weight);
+  		},
+  		vrmExpressionNames(selector) {
+  			assertActive();
+  			return scene.vrmExpressionNames(selector);
   		}
   	};
   	const capability = Object.freeze({
@@ -6875,6 +6913,20 @@
   		const { degToRad } = this.requireThree().MathUtils;
   		node.rotation.set(degToRad(degrees.x), degToRad(degrees.y), degToRad(degrees.z));
   	}
+  	/**
+  	* Sets an expression's weight. The weight is clamped to 0 through 1, as three-vrm does, and
+  	* the scene tick applies it with the other expressions.
+  	*/
+  	setExpression(nodeId, name, weight) {
+  		if (!Number.isFinite(weight)) throw new Error(`VRM expression weight must be a number: ${weight}`);
+  		const expressions = this.requireVrm(nodeId).expressionManager;
+  		if (expressions === void 0) throw new Error(`VRM ${nodeId} has no expressions.`);
+  		if (expressions.getExpression(name) == null) throw new Error(`VRM ${nodeId} has no expression: ${name}`);
+  		expressions.setValue(name, Math.min(Math.max(weight, 0), 1));
+  	}
+  	expressionNames(nodeId) {
+  		return (this.entries.get(nodeId)?.vrm?.expressionManager?.expressions ?? []).map((expression) => expression.expressionName);
+  	}
   	boneNames(nodeId) {
   		const vrm = this.entries.get(nodeId)?.vrm;
   		if (vrm === null || vrm === void 0) return [];
@@ -6995,7 +7047,13 @@
   				Z: z
   			}),
   			vrmBoneNames: (selector) => this.vrmBoneNamesFor(Scratch.Cast.toString(selector)),
-  			vrmStatus: (selector) => this.vrmStatusFor(Scratch.Cast.toString(selector))
+  			vrmStatus: (selector) => this.vrmStatusFor(Scratch.Cast.toString(selector)),
+  			setVrmExpression: (selector, name, weight) => this.setVrmExpression({
+  				SELECTOR: selector,
+  				NAME: name,
+  				WEIGHT: weight
+  			}),
+  			vrmExpressionNames: (selector) => this.vrmExpressionNamesFor(Scratch.Cast.toString(selector))
   		}, () => this.assertActive());
   		const runtime = Scratch.vm?.runtime;
   		if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
@@ -7269,6 +7327,17 @@
   			if (this.vrms.state(node.id) !== "ready") continue;
   			this.vrms.setBoneRotation(node.id, bone, rotation);
   		}
+  	}
+  	setVrmExpression(args) {
+  		const name = Scratch.Cast.toString(args.NAME).trim();
+  		const weight = Scratch.Cast.toNumber(args.WEIGHT);
+  		for (const node of this.matches(Scratch.Cast.toString(args.SELECTOR))) {
+  			if (this.vrms.state(node.id) !== "ready") continue;
+  			this.vrms.setExpression(node.id, name, weight);
+  		}
+  	}
+  	vrmExpressionNames(args) {
+  		return JSON.stringify(this.vrmExpressionNamesFor(Scratch.Cast.toString(args.SELECTOR)));
   	}
   	vrmBoneNames(args) {
   		return JSON.stringify(this.vrmBoneNamesFor(Scratch.Cast.toString(args.SELECTOR)));
@@ -7661,6 +7730,10 @@
   	vrmBoneNamesFor(selector) {
   		const node = this.firstMatch(selector);
   		return node === void 0 ? [] : this.vrms.boneNames(node.id);
+  	}
+  	vrmExpressionNamesFor(selector) {
+  		const node = this.firstMatch(selector);
+  		return node === void 0 ? [] : this.vrms.expressionNames(node.id);
   	}
   	vrmStatusFor(selector) {
   		const node = this.firstMatch(selector);

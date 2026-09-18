@@ -358,6 +358,26 @@
       }
     },
     {
+      "opcode": "setVrmExpression",
+      "blockType": "COMMAND",
+      "text": "set VRM [SELECTOR] expression [NAME] to [WEIGHT]",
+      "description": "Sets the weight, clamped to 0 through 1, of a preset or custom VRM expression such as happy or blink on every matching node whose VRM is ready.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#avatar"},
+        "NAME": {"type": "STRING", "defaultValue": "happy"},
+        "WEIGHT": {"type": "NUMBER", "defaultValue": 1}
+      }
+    },
+    {
+      "opcode": "vrmExpressionNames",
+      "blockType": "REPORTER",
+      "text": "VRM [SELECTOR] expressions",
+      "description": "Returns the preset and custom expression names of the first matching node's VRM as a JSON array.",
+      "arguments": {
+        "SELECTOR": {"type": "STRING", "defaultValue": "#avatar"}
+      }
+    },
+    {
       "opcode": "vrmState",
       "blockType": "REPORTER",
       "text": "VRM [SELECTOR] state",
