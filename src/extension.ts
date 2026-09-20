@@ -171,6 +171,9 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     this.resetGraph();
     this.runtimeCapability = createRuntimeCapability(
       {
+        createScene: (layer, mode) => this.createScene({LAYER: layer, MODE: mode}),
+        createNode: (type, id, parent) => this.createNode({TYPE: type, ID: id, PARENT: parent}),
+        addClass: (className, selector) => this.addClass({CLASS: className, SELECTOR: selector}),
         loadTemplate: (id, source) => this.loadTemplate({ID: id, SOURCE: source}),
         createFromTemplate: (template, instance, parent) =>
           this.createFromTemplate({TEMPLATE: template, INSTANCE: instance, PARENT: parent}),

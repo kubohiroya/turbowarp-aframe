@@ -685,6 +685,18 @@
   var runtimeCapabilityKey = "turbowarpAFrameCapability";
   function createRuntimeCapability(scene, assertActive) {
   	const scenePort = {
+  		async createScene(layer, mode) {
+  			assertActive();
+  			await scene.createScene(layer, mode);
+  		},
+  		createNode(type, id, parent) {
+  			assertActive();
+  			scene.createNode(type, id, parent);
+  		},
+  		addClass(className, selector) {
+  			assertActive();
+  			scene.addClass(className, selector);
+  		},
   		loadTemplate(id, source) {
   			assertActive();
   			scene.loadTemplate(id, source);
@@ -7027,6 +7039,19 @@
   		this.vrms = new VrmAvatars(() => this.getThree());
   		this.resetGraph();
   		this.runtimeCapability = createRuntimeCapability({
+  			createScene: (layer, mode) => this.createScene({
+  				LAYER: layer,
+  				MODE: mode
+  			}),
+  			createNode: (type, id, parent) => this.createNode({
+  				TYPE: type,
+  				ID: id,
+  				PARENT: parent
+  			}),
+  			addClass: (className, selector) => this.addClass({
+  				CLASS: className,
+  				SELECTOR: selector
+  			}),
   			loadTemplate: (id, source) => this.loadTemplate({
   				ID: id,
   				SOURCE: source

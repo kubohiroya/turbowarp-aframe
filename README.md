@@ -34,6 +34,9 @@ Composite unsandboxed extensions can use the same scene operations as the blocks
 interface AFrameRuntimeCapabilityV2 {
   readonly version: 2;
   requireVersion(version: number): AFrameRuntimeCapabilityV2;
+  createScene(layer: string, mode: string): Promise<void>;
+  createNode(type: string, id: string, parent: string): void;
+  addClass(className: string, selector: string): void;
   loadTemplate(id: string, source: string): void;
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
@@ -51,6 +54,8 @@ interface AFrameRuntimeCapabilityV2 {
   vrmExpressionNames(selector: string): string[];
 }
 ```
+
+`createScene`, `createNode`, and `addClass` build the scene itself, so an extension that turns a scene description into A-Frame nodes can do it through this port rather than only through blocks. `createFromTemplate` is not a substitute: it prefixes child ids with the instance id and writes `template` and `instance` data keys, so a caller that already owns its ids would not get the ids it asked for.
 
 `setAttribute` and `setData` write an A-Frame component attribute such as `visible`, and a `data-<key>` attribute, on every matching node. They exist so that a companion extension which has to write attributes, such as `turbowarp-ar` writing target pose and visibility, goes through this port and keeps the extension's scene state in sync, instead of reaching into the DOM behind its back.
 
@@ -76,7 +81,7 @@ Load `dist/turbowarp-aframe.js` as an unsandboxed custom extension in TurboWarp.
 For package-based reuse, pin the version:
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.6.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.7.0
 ```
 
 ## Block reference
