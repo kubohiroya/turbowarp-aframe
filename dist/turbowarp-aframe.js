@@ -701,6 +701,14 @@
   			assertActive();
   			scene.setRotation(selector, x, y, z);
   		},
+  		setAttribute(selector, name, value) {
+  			assertActive();
+  			scene.setAttribute(selector, name, value);
+  		},
+  		setData(selector, key, value) {
+  			assertActive();
+  			scene.setData(selector, key, value);
+  		},
   		emitEvent(type, selector, data) {
   			assertActive();
   			scene.emitEvent(type, selector, data);
@@ -6970,6 +6978,18 @@
   };
   //#endregion
   //#region src/extension.ts
+  var SCENE_LAYERS = Object.freeze(["above-stage", "below-stage"]);
+  var DEFAULT_SCENE_LAYER = "above-stage";
+  /**
+  * Stacking positions for the two hosts that can share the stage.
+  *
+  * `turbowarp-ar` puts its camera background one step below the `above-stage` value here, so a 3D
+  * scene renders over the camera image. Keep the two in step when either extension changes.
+  */
+  var SCENE_HOST_Z_INDEX = {
+  	"above-stage": "10",
+  	"below-stage": "0"
+  };
   var blockDefinitions = block_definitions_default.blocks;
   var ROOT_ID = "scene";
   var DOM_EVENT_TYPES = [
@@ -6997,7 +7017,7 @@
   		this.domEventTypes = new Set(DOM_EVENT_TYPES);
   		this.runtimeId = `twaframe-${Math.random().toString(36).slice(2)}`;
   		this.sceneOptions = {
-  			layer: "above-stage",
+  			layer: DEFAULT_SCENE_LAYER,
   			mode: "3d"
   		};
   		this.rootElement = null;
@@ -7027,6 +7047,16 @@
   				X: x,
   				Y: y,
   				Z: z
+  			}),
+  			setAttribute: (selector, name, value) => this.setAttribute({
+  				SELECTOR: selector,
+  				NAME: name,
+  				VALUE: value
+  			}),
+  			setData: (selector, key, value) => this.setData({
+  				SELECTOR: selector,
+  				KEY: key,
+  				VALUE: value
   			}),
   			emitEvent: (type, selector, data) => this.emitEvent({
   				TYPE: type,
@@ -7070,7 +7100,7 @@
   	async createScene(args) {
   		await ensureAFrame();
   		this.sceneOptions = {
-  			layer: Scratch.Cast.toString(args.LAYER) || "above-stage",
+  			layer: this.normalizeLayer(Scratch.Cast.toString(args.LAYER)),
   			mode: Scratch.Cast.toString(args.MODE) || "3d"
   		};
   		this.resetGraph();
@@ -7498,7 +7528,7 @@
   		host.style.position = "absolute";
   		host.style.inset = "0";
   		host.style.pointerEvents = "auto";
-  		host.style.zIndex = this.sceneOptions.layer === "below-stage" ? "0" : "10";
+  		host.style.zIndex = SCENE_HOST_Z_INDEX[this.sceneOptions.layer];
   		const scene = document.createElement("a-scene");
   		host.append(scene);
   		this.findStageMount().append(host);
@@ -7871,6 +7901,14 @@
   	}
   	normalizeId(value) {
   		return this.normalizeToken(value) || "node";
+  	}
+  	/**
+  	* Blocks take whatever string a project hands them, so an unknown layer falls back to the default
+  	* rather than stopping the script, and never reaches the host as a value it cannot honor.
+  	*/
+  	normalizeLayer(value) {
+  		const layer = value.trim();
+  		return SCENE_LAYERS.includes(layer) ? layer : DEFAULT_SCENE_LAYER;
   	}
   	normalizeToken(value) {
   		return value.trim().replace(/[^a-zA-Z0-9_-]/g, "-");

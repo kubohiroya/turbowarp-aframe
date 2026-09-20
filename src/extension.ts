@@ -53,8 +53,28 @@ interface SceneEvent {
   data: string;
 }
 
+/**
+ * Where the scene host sits relative to the TurboWarp stage.
+ *
+ * This is the whole vocabulary, and `turbowarp-ar` uses the same two values for its camera
+ * background. `mode` stays an open string because it only describes intent; `layer` decides where
+ * the host is drawn, so a value the host cannot honor does not belong in it.
+ */
+type SceneLayer = 'above-stage' | 'below-stage';
+
+const SCENE_LAYERS: readonly SceneLayer[] = Object.freeze(['above-stage', 'below-stage']);
+const DEFAULT_SCENE_LAYER: SceneLayer = 'above-stage';
+
+/**
+ * Stacking positions for the two hosts that can share the stage.
+ *
+ * `turbowarp-ar` puts its camera background one step below the `above-stage` value here, so a 3D
+ * scene renders over the camera image. Keep the two in step when either extension changes.
+ */
+const SCENE_HOST_Z_INDEX: Record<SceneLayer, string> = {'above-stage': '10', 'below-stage': '0'};
+
 interface SceneOptions {
-  layer: string;
+  layer: SceneLayer;
   mode: string;
 }
 
@@ -139,7 +159,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private readonly eventQueue: SceneEvent[] = [];
   private readonly domEventTypes = new Set<string>(DOM_EVENT_TYPES);
   private readonly runtimeId = `twaframe-${Math.random().toString(36).slice(2)}`;
-  private sceneOptions: SceneOptions = {layer: 'above-stage', mode: '3d'};
+  private sceneOptions: SceneOptions = {layer: DEFAULT_SCENE_LAYER, mode: '3d'};
   private rootElement: Element | null = null;
   private sceneReadyPending = false;
   private lastEvent: SceneEvent | null = null;
@@ -158,6 +178,10 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
           this.setPosition({SELECTOR: selector, X: x, Y: y, Z: z}),
         setRotation: (selector, x, y, z) =>
           this.setRotation({SELECTOR: selector, X: x, Y: y, Z: z}),
+        setAttribute: (selector, name, value) =>
+          this.setAttribute({SELECTOR: selector, NAME: name, VALUE: value}),
+        setData: (selector, key, value) =>
+          this.setData({SELECTOR: selector, KEY: key, VALUE: value}),
         emitEvent: (type, selector, data) =>
           this.emitEvent({TYPE: type, SELECTOR: selector, DATA: data}),
         deleteSelector: (selector) => this.deleteSelector({SELECTOR: selector}),
@@ -190,7 +214,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   public async createScene(args: {LAYER: unknown; MODE: unknown}): Promise<void> {
     await ensureAFrame();
     this.sceneOptions = {
-      layer: Scratch.Cast.toString(args.LAYER) || 'above-stage',
+      layer: this.normalizeLayer(Scratch.Cast.toString(args.LAYER)),
       mode: Scratch.Cast.toString(args.MODE) || '3d'
     };
     this.resetGraph();
@@ -761,7 +785,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     host.style.position = 'absolute';
     host.style.inset = '0';
     host.style.pointerEvents = 'auto';
-    host.style.zIndex = this.sceneOptions.layer === 'below-stage' ? '0' : '10';
+    host.style.zIndex = SCENE_HOST_Z_INDEX[this.sceneOptions.layer];
 
     const scene = document.createElement('a-scene');
     host.append(scene);
@@ -1295,6 +1319,15 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
 
   private normalizeId(value: string): string {
     return this.normalizeToken(value) || 'node';
+  }
+
+  /**
+   * Blocks take whatever string a project hands them, so an unknown layer falls back to the default
+   * rather than stopping the script, and never reaches the host as a value it cannot honor.
+   */
+  private normalizeLayer(value: string): SceneLayer {
+    const layer = value.trim() as SceneLayer;
+    return SCENE_LAYERS.includes(layer) ? layer : DEFAULT_SCENE_LAYER;
   }
 
   private normalizeToken(value: string): string {

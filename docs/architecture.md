@@ -24,7 +24,7 @@ The generated JavaScript bundle is an unsandboxed TurboWarp extension. The manif
 
 ## Versioned Runtime Capability
 
-The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 2 is a narrow typed, frozen port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `emitEvent`, `deleteSelector`, and `countSelector`, plus `loadVrm`, `setVrmBoneRotation`, `vrmBoneNames`, `vrmStatus`, `setVrmExpression`, and `vrmExpressionNames`. The expression operations were added to version 2 without changing its version, because they only add methods and a consumer checks for the methods it uses. Version 1, which had only the scene operations, was removed in 0.4.0 rather than kept beside version 2, so there is a single contract to keep correct.
+The extension publishes `Scratch.vm.runtime.turbowarpAFrameCapability`. Version 2 is a narrow typed, frozen port containing `loadTemplate`, `createFromTemplate`, `setPosition`, `setRotation`, `setAttribute`, `setData`, `emitEvent`, `deleteSelector`, and `countSelector`, plus `loadVrm`, `setVrmBoneRotation`, `vrmBoneNames`, `vrmStatus`, `setVrmExpression`, and `vrmExpressionNames`. The expression operations, and later `setAttribute` and `setData`, were added to version 2 without changing its version, because they only add methods and a consumer checks for the methods it uses. `setAttribute` and `setData` exist so that a companion extension which needs to write A-Frame attributes, such as `turbowarp-ar` writing target pose and visibility, goes through this port instead of reaching into the DOM behind the extension's back. Version 1, which had only the scene operations, was removed in 0.4.0 rather than kept beside version 2, so there is a single contract to keep correct.
 
 Each port method delegates to the corresponding block handler. Consequently, block calls and composite-extension calls share casting, validation, selector matching, event queuing, and the extension-owned scene state. The port never exposes DOM elements, A-Frame/Three.js objects, or glTF internals.
 
@@ -36,13 +36,14 @@ Before building the scene, `createScene` makes sure A-Frame 1.8.0 is on the page
 
 `createScene` creates a root `#scene` node and, when a browser DOM exists, a `#tw-aframe-root > a-scene` host. The host is mounted inside the first detected TurboWarp stage wrapper or canvas parent, falling back to `document.body` only when no stage-like element is found.
 
-The initial layer values are strings so the book/API can refine the vocabulary without changing the block shape:
+The layer vocabulary is closed, and `turbowarp-ar` uses the same two values for its camera background:
 
 - `above-stage`: A-Frame overlays the TurboWarp stage.
 - `below-stage`: A-Frame stays behind the stage when the host CSS allows it.
-- `camera-under-3d`: camera/video should sit below the 3D layer.
 
-The initial mode values are also open strings:
+The block argument stays a plain string, so a project can pass anything; an unrecognized value falls back to `above-stage` instead of being stored as a layer the host cannot honor. On `above-stage` the host is given a stacking position one step above `turbowarp-ar`'s camera background, so a 3D scene renders over the camera image. `camera-under-3d` was listed here once and never implemented — the ordering it described is structural, not a value a caller can ask for.
+
+The mode values, by contrast, are open strings that only describe intent:
 
 - `3d`: ordinary embedded 3D scene.
 - `camera`: camera-backed composition.

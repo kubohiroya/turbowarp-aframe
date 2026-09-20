@@ -150,6 +150,26 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.countSelector({SELECTOR: '.actor'})).toBe(0);
   });
 
+  it('sets attributes and data through the capability, as the blocks do', () => {
+    const extension = new TurboWarpAFrameExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
+
+    extension.createNode({TYPE: 'box', ID: 'card', PARENT: '#scene'});
+    capability.setAttribute('#card', 'visible', 'false');
+    capability.setData('#card', 'ar-target', 'marker-1');
+
+    expect(extension.snapshot()).toMatchObject({
+      nodes: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'card',
+          attributes: {visible: 'false'},
+          data: {'ar-target': 'marker-1'}
+        })
+      ])
+    });
+  });
+
   it('adds VRM operations to the capability', async () => {
     const extension = new TurboWarpAFrameExtension();
     const runtime = Scratch.vm?.runtime ?? {};
@@ -182,6 +202,12 @@ describe('TurboWarpAFrameExtension', () => {
 
     expect(runtime[runtimeCapabilityKey]).toBeUndefined();
     expect(() => capability.countSelector('*')).toThrow('A-Frame runtime capability is disposed.');
+    expect(() => capability.setAttribute('#card', 'visible', 'true')).toThrow(
+      'A-Frame runtime capability is disposed.'
+    );
+    expect(() => capability.setData('#card', 'ar-target', 'marker-1')).toThrow(
+      'A-Frame runtime capability is disposed.'
+    );
     expect(() => capability.requireVersion(2)).toThrow('A-Frame runtime capability is disposed.');
     expect(() => capability.vrmStatus('#avatar')).toThrow('A-Frame runtime capability is disposed.');
     expect(() => capability.setVrmExpression('#avatar', 'happy', 1)).toThrow(
@@ -213,14 +239,22 @@ describe('TurboWarpAFrameExtension', () => {
   it('creates a scene and fires scene ready once', async () => {
     const extension = new TurboWarpAFrameExtension();
 
-    await extension.createScene({LAYER: 'camera-under-3d', MODE: 'ar-fallback'});
+    await extension.createScene({LAYER: 'below-stage', MODE: 'ar-fallback'});
 
     expect(extension.whenSceneReady()).toBe(true);
     expect(extension.eventTargetId()).toBe('scene');
     expect(extension.whenSceneReady()).toBe(false);
     expect(extension.snapshot()).toMatchObject({
-      options: {layer: 'camera-under-3d', mode: 'ar-fallback'}
+      options: {layer: 'below-stage', mode: 'ar-fallback'}
     });
+  });
+
+  it('keeps an unknown layer inside the vocabulary the host can honor', async () => {
+    const extension = new TurboWarpAFrameExtension();
+
+    await extension.createScene({LAYER: 'camera-under-3d', MODE: '3d'});
+
+    expect(extension.snapshot()).toMatchObject({options: {layer: 'above-stage', mode: '3d'}});
   });
 
   it('creates and mutates selected scene graph nodes', async () => {
