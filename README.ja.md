@@ -34,6 +34,9 @@ unsandboxed 拡張はページ DOM を操作できます。信頼できる生成
 interface AFrameRuntimeCapabilityV2 {
   readonly version: 2;
   requireVersion(version: number): AFrameRuntimeCapabilityV2;
+  createScene(layer: string, mode: string): Promise<void>;
+  createNode(type: string, id: string, parent: string): void;
+  addClass(className: string, selector: string): void;
   loadTemplate(id: string, source: string): void;
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
@@ -51,6 +54,8 @@ interface AFrameRuntimeCapabilityV2 {
   vrmExpressionNames(selector: string): string[];
 }
 ```
+
+`createScene`、`createNode`、`addClass`はscene自体を構築します。scene記述をA-Frame nodeへ変換する機能拡張が、blockだけに頼らずこのportを通せるようにするためです。`createFromTemplate`は代用になりません。子のidにinstance idを前置し、`template`と`instance`のdata keyを書き込むため、自分でidを決めている呼び出し側は要求したidを得られません。
 
 `setAttribute`と`setData`は、`visible`などのA-Frameコンポーネント属性と`data-<key>`属性を、selectorに一致するすべてのnodeへ書きます。属性を書く必要のある連携機能拡張—たとえばtarget poseとvisibilityを書く`turbowarp-ar`—が、機能拡張の背後でDOMを直接触らずこのportを通り、機能拡張が持つscene stateと矛盾しないようにするために存在します。
 
@@ -76,7 +81,7 @@ TurboWarp では `dist/turbowarp-aframe.js` を unsandboxed custom extension と
 package として参照する場合は version を固定します。
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.6.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.7.0
 ```
 
 ## ブロック概要

@@ -150,6 +150,23 @@ describe('TurboWarpAFrameExtension', () => {
     expect(extension.countSelector({SELECTOR: '.actor'})).toBe(0);
   });
 
+  it('builds a scene through the capability, as the blocks do', async () => {
+    const extension = new TurboWarpAFrameExtension();
+    const runtime = Scratch.vm?.runtime ?? {};
+    const capability = runtime[runtimeCapabilityKey] as AFrameRuntimeCapabilityV2;
+
+    await capability.createScene('below-stage', 'ar');
+    capability.createNode('box', 'card', '#scene');
+    capability.addClass('monster', '#card');
+
+    expect(extension.snapshot()).toMatchObject({
+      options: {layer: 'below-stage', mode: 'ar'},
+      nodes: expect.arrayContaining([
+        expect.objectContaining({id: 'card', type: 'box', parentId: 'scene', classes: ['monster']})
+      ])
+    });
+  });
+
   it('sets attributes and data through the capability, as the blocks do', () => {
     const extension = new TurboWarpAFrameExtension();
     const runtime = Scratch.vm?.runtime ?? {};
@@ -206,6 +223,12 @@ describe('TurboWarpAFrameExtension', () => {
       'A-Frame runtime capability is disposed.'
     );
     expect(() => capability.setData('#card', 'ar-target', 'marker-1')).toThrow(
+      'A-Frame runtime capability is disposed.'
+    );
+    expect(() => capability.createNode('box', 'card', '#scene')).toThrow(
+      'A-Frame runtime capability is disposed.'
+    );
+    await expect(capability.createScene('above-stage', '3d')).rejects.toThrow(
       'A-Frame runtime capability is disposed.'
     );
     expect(() => capability.requireVersion(2)).toThrow('A-Frame runtime capability is disposed.');

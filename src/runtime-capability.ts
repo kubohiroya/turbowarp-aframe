@@ -3,6 +3,11 @@ export const runtimeCapabilityVersion = 2 as const;
 export const runtimeCapabilityKey = 'turbowarpAFrameCapability';
 
 export interface AFrameScenePort {
+  /** Creates the scene host, loading A-Frame first when the page does not have it. */
+  createScene(layer: string, mode: string): Promise<void>;
+  /** Adds one node under the node the parent selector matches. */
+  createNode(type: string, id: string, parent: string): void;
+  addClass(className: string, selector: string): void;
   loadTemplate(id: string, source: string): void;
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
@@ -45,6 +50,18 @@ export function createRuntimeCapability(
   assertActive: () => void
 ): AFrameRuntimeCapabilityV2 {
   const scenePort: AFrameScenePort = {
+    async createScene(layer, mode) {
+      assertActive();
+      await scene.createScene(layer, mode);
+    },
+    createNode(type, id, parent) {
+      assertActive();
+      scene.createNode(type, id, parent);
+    },
+    addClass(className, selector) {
+      assertActive();
+      scene.addClass(className, selector);
+    },
     loadTemplate(id, source) {
       assertActive();
       scene.loadTemplate(id, source);
