@@ -38,6 +38,8 @@ interface AFrameRuntimeCapabilityV2 {
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
   setRotation(selector: string, x: number, y: number, z: number): void;
+  setAttribute(selector: string, name: string, value: string): void;
+  setData(selector: string, key: string, value: string): void;
   emitEvent(type: string, selector: string, data: string): void;
   deleteSelector(selector: string): void;
   countSelector(selector: string): number;
@@ -49,6 +51,8 @@ interface AFrameRuntimeCapabilityV2 {
   vrmExpressionNames(selector: string): string[];
 }
 ```
+
+`setAttribute` and `setData` write an A-Frame component attribute such as `visible`, and a `data-<key>` attribute, on every matching node. They exist so that a companion extension which has to write attributes, such as `turbowarp-ar` writing target pose and visibility, goes through this port and keeps the extension's scene state in sync, instead of reaching into the DOM behind its back.
 
 Besides the scene operations, version 2 carries VRM avatars. `loadVrm` loads the model onto the first node matching the selector with three-vrm, running on the Three.js that A-Frame loaded, and resolves when it is ready. `setVrmBoneRotation` sets Euler degrees on a normalized humanoid bone such as `leftUpperArm`, relative to the T-pose, so the same rotation means the same thing on every VRM; the scene tick applies it to the model's own bones. Nodes whose VRM is not ready are skipped, and an unknown bone name throws. `setVrmExpression` sets the weight of a preset expression such as `happy`, `blink`, or `aa`, or of a custom one, clamped to 0 through 1 as three-vrm does, and the scene tick applies it; `vrmExpressionNames` lists the names the model has, and an unknown name throws.
 
@@ -72,7 +76,7 @@ Load `dist/turbowarp-aframe.js` as an unsandboxed custom extension in TurboWarp.
 For package-based reuse, pin the version:
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.5.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.6.0
 ```
 
 ## Block reference

@@ -7,6 +7,10 @@ export interface AFrameScenePort {
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
   setRotation(selector: string, x: number, y: number, z: number): void;
+  /** Sets an A-Frame component attribute, such as `visible`, on every matching node. */
+  setAttribute(selector: string, name: string, value: string): void;
+  /** Sets a `data-<key>` attribute on every matching node. */
+  setData(selector: string, key: string, value: string): void;
   emitEvent(type: string, selector: string, data: string): void;
   deleteSelector(selector: string): void;
   countSelector(selector: string): number;
@@ -56,6 +60,14 @@ export function createRuntimeCapability(
     setRotation(selector, x, y, z) {
       assertActive();
       scene.setRotation(selector, x, y, z);
+    },
+    setAttribute(selector, name, value) {
+      assertActive();
+      scene.setAttribute(selector, name, value);
+    },
+    setData(selector, key, value) {
+      assertActive();
+      scene.setData(selector, key, value);
     },
     emitEvent(type, selector, data) {
       assertActive();

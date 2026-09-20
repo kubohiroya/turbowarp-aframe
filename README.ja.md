@@ -38,6 +38,8 @@ interface AFrameRuntimeCapabilityV2 {
   createFromTemplate(template: string, instance: string, parent: string): void;
   setPosition(selector: string, x: number, y: number, z: number): void;
   setRotation(selector: string, x: number, y: number, z: number): void;
+  setAttribute(selector: string, name: string, value: string): void;
+  setData(selector: string, key: string, value: string): void;
   emitEvent(type: string, selector: string, data: string): void;
   deleteSelector(selector: string): void;
   countSelector(selector: string): number;
@@ -49,6 +51,8 @@ interface AFrameRuntimeCapabilityV2 {
   vrmExpressionNames(selector: string): string[];
 }
 ```
+
+`setAttribute`と`setData`は、`visible`などのA-Frameコンポーネント属性と`data-<key>`属性を、selectorに一致するすべてのnodeへ書きます。属性を書く必要のある連携機能拡張—たとえばtarget poseとvisibilityを書く`turbowarp-ar`—が、機能拡張の背後でDOMを直接触らずこのportを通り、機能拡張が持つscene stateと矛盾しないようにするために存在します。
 
 version 2は、scene操作に加えてVRMアバターを扱います。`loadVrm`は、A-Frameが読み込んだThree.jsの上でthree-vrmを動かし、selectorに最初に一致したnodeへモデルを読み込んで、準備ができると解決します。`setVrmBoneRotation`は、`leftUpperArm`などの正規化されたヒューマノイドのボーンへ、Tポーズからの回転を度のEuler角で設定します。どのVRMでも同じ回転が同じ意味になり、sceneのtickがモデル本来のボーンへ反映します。VRMの準備ができていないnodeは飛ばし、存在しないボーン名は例外になります。`setVrmExpression`は、`happy`、`blink`、`aa`などのプリセットまたはカスタムの表情の重みを、three-vrmと同じく0〜1に丸めて設定し、sceneのtickが反映します。`vrmExpressionNames`はモデルが持つ表情名を返し、存在しない名前は例外になります。
 
@@ -72,7 +76,7 @@ TurboWarp では `dist/turbowarp-aframe.js` を unsandboxed custom extension と
 package として参照する場合は version を固定します。
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.5.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.6.0
 ```
 
 ## ブロック概要

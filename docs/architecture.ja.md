@@ -24,7 +24,7 @@ src/config.ts + src/block-definitions.json
 
 ## version付きruntime capability
 
-機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 2は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`emitEvent`、`deleteSelector`、`countSelector`に、`loadVrm`、`setVrmBoneRotation`、`vrmBoneNames`、`vrmStatus`、`setVrmExpression`、`vrmExpressionNames`を加えた、freezeされた狭い型付きportです。scene操作だけを持っていたversion 1は、version 2と並べて残さず0.4.0で撤去しました。正しく保つ契約を1つにするためです。表情の操作は、methodを加えるだけでconsumerは使うmethodの有無を確かめるため、versionを変えずにversion 2へ加えました。
+機能拡張は`Scratch.vm.runtime.turbowarpAFrameCapability`を公開します。version 2は、`loadTemplate`、`createFromTemplate`、`setPosition`、`setRotation`、`setAttribute`、`setData`、`emitEvent`、`deleteSelector`、`countSelector`に、`loadVrm`、`setVrmBoneRotation`、`vrmBoneNames`、`vrmStatus`、`setVrmExpression`、`vrmExpressionNames`を加えた、freezeされた狭い型付きportです。scene操作だけを持っていたversion 1は、version 2と並べて残さず0.4.0で撤去しました。正しく保つ契約を1つにするためです。表情の操作と、後から加えた`setAttribute`・`setData`は、methodを加えるだけでconsumerは使うmethodの有無を確かめるため、versionを変えずにversion 2へ加えました。`setAttribute`と`setData`は、A-Frame属性を書く必要のある連携機能拡張—たとえばtarget poseとvisibilityを書く`turbowarp-ar`—が、機能拡張の背後でDOMを直接触らずこのportを通るようにするために存在します。
 
 各port methodは対応するblock handlerへ委譲します。そのため、block呼び出しと複合機能拡張からの呼び出しは、cast、validation、selector matching、event queue、機能拡張所有のscene stateを共有します。portはDOM element、A-Frame／Three.js object、glTF内部実装を公開しません。
 
@@ -36,13 +36,14 @@ consumerは利用前に`requireVersion(2)`を呼ぶ必要があります。1を�
 
 `createScene` は root の `#scene` ノードを作り、ブラウザ DOM がある場合は `#tw-aframe-root > a-scene` を作成します。host は最初に検出できた TurboWarp stage wrapper または canvas の親へ mount し、stage らしい要素が見つからない場合だけ `document.body` に fallback します。
 
-初期 layer は文字列です。Book/API 側で語彙を調整しても block shape を変えずに済むようにしています。
+layer の語彙は閉じており、`turbowarp-ar` もカメラ背景に同じ2つの値を使います。
 
 - `above-stage`: A-Frame を TurboWarp stage の上に重ねます。
 - `below-stage`: host CSS が許す場合に A-Frame を stage の背面へ置きます。
-- `camera-under-3d`: camera/video を 3D layer の下に置く想定です。
 
-初期 mode も文字列です。
+block の引数は文字列のままなので作品は任意の値を渡せますが、認識できない値は `above-stage` へフォールバックします。host が honor できない値を layer として保持することはありません。`above-stage` のとき、host は `turbowarp-ar` のカメラ背景より1つ上の重なり位置に置かれ、3D scene がカメラ映像の上に描かれます。`camera-under-3d` はかつてここに記載されていましたが実装されたことはありません。それが表していた順序は構造であって、呼び出し側が指定できる値ではありません。
+
+一方 mode は、意図を述べるだけの開いた文字列です。
 
 - `3d`: 通常の埋め込み 3D シーンです。
 - `camera`: camera 合成を想定します。
