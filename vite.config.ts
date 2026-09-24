@@ -1,9 +1,9 @@
 /// <reference types="vitest/config" />
 import {defineConfig} from 'vite';
+import {extensionManifestPlugin} from '@kubohiroya/turbowarp-extension-manifest';
 import {turboWarpExtension} from '@kubohiroya/vite-plugin-turbowarp-extension';
 import definitions from './src/block-definitions.json' with { type: 'json' };
 import {extensionConfig} from './src/config.js';
-import {extensionManifestPlugin} from './src/extension-manifest.js';
 import {threeVrmFactoryPlugin} from './scripts/three-vrm-factory-plugin.js';
 
 export default defineConfig({
