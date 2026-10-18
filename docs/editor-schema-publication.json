@@ -1,0 +1,98 @@
+{
+  "stage": "S1 reviewed fixes and Git artifact alignment",
+  "repository": "@kubohiroya/turbowarp-aframe",
+  "issue": "https://github.com/kubohiroya/turbowarp-aframe/issues/19",
+  "observed_at_utc": "2026-10-18T06:31:21.469328+00:00",
+  "base_commit_before_this_publication": "14331b75cbcc5406bc41357fb8bfa415b7b913bd",
+  "branch": "feat/schema/stage1-aframe",
+  "dependency_pins": {
+    "@kubohiroya/turbowarp-extension-data-editor": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#b5f4b8d2e391a0d57d091c8f3e1c2d58da152dc8"
+  },
+  "common_revision": "b5f4b8d2e391a0d57d091c8f3e1c2d58da152dc8",
+  "resolved_dependencies": [
+    {
+      "name": "@kubohiroya/turbowarp-extension-data-editor",
+      "via": "@kubohiroya/turbowarp-aframe",
+      "specifier": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#b5f4b8d2e391a0d57d091c8f3e1c2d58da152dc8",
+      "resolved_path": "/private/tmp/schema-stage1-worktrees-20261018/aframe/node_modules/.pnpm/@kubohiroya+turbowarp-extension-data-editor@https+++codeload.github.com+kubohiroya+turb_ea9ed4fbe83b895db0a5315e4e7cce4f/node_modules/@kubohiroya/turbowarp-extension-data-editor",
+      "version": "0.1.0",
+      "manifest_sha256": "3e86db1bf667088a7a87ada19fc11573082918335dd281073464ca4fcebf74da",
+      "build_info": {
+        "name": "@kubohiroya/turbowarp-extension-data-editor",
+        "version": "0.1.0",
+        "repository": "https://github.com/kubohiroya/turbowarp-extension-data-editor",
+        "revision": "b5f4b8d2e391a0d57d091c8f3e1c2d58da152dc8"
+      },
+      "rjsf_type_sha256": "6b68cfc2a04c7b730234968bdd6fac380747e2de6631e1752caf07fd8b9b0c90",
+      "rjsf_default_null": true,
+      "pure_files_sha256": {
+        "schema-compose.d.ts": "e9bb269fcb3be82661b692e7fdf5c55ac433a31d699ac591a86bf5358046b83e",
+        "schema-compose.js": "04b32c71920f1ad99425582c3ef57b69b3725f87191efc808ef94e28b8d7bdd2",
+        "schema-engine.d.ts": "36049b8206969175b2e9628b3cf0cb670cb6b10836e28963e5aa32c797882681",
+        "schema-engine.js": "80f203c8c8035ea3e0becd02087dfe3cd5a77ffbcf1a183cbd7976e79294efff",
+        "schema-json.d.ts": "dc0a7644776117235b33129292ec0936bce37f769adb497387a7071508ce4540",
+        "schema-json.js": "367f4deb589286fad3d2c05456cfd8b6859d5e1e2efa22dcd84e629f6d9efddc",
+        "schema-types.d.ts": "4c56872a799cb4e5e59c5ebcd3b889493e082e08c5ad6629b6b1a1c5ae24a3b0",
+        "schema-types.js": "7d29a0d2cb0e10d9c98b299939c91c64fd791f09e1284b5022d8782fa54dad9a",
+        "schema-view.d.ts": "77c66c91b30d4ce06a33f1b8fac153202f64ad68936dda467eae251117132702",
+        "schema-view.js": "7efbcdd76d653b7fb8ce6dcbbe303cc282f6d640793918501717e5dc04bf0a32",
+        "schema.d.ts": "2ad7f9350c391c59d6c641c18120c84926210d7905d0d27e51e58097ced5f7be",
+        "schema.js": "c0acab4248f09489a99ae7f931302a4cf83ad0221027e06a9c6d5b32d6d094b2"
+      }
+    }
+  ],
+  "configuration_sha256": {
+    "package.json": "6ef0f65aeba368d5dd2ef6119ec7ef5651e12e9118a17f0e152f8ab67eaff200",
+    "pnpm-lock.yaml": "dc664b032b94daa88a28860daca14415ee430a901421b40fdd72c907ca997142",
+    "pnpm-workspace.yaml": "b4d08a224c9cf5a2c150ce5a5ce190c2398e8546d277ab8b03dd1ea88f6a02eb",
+    "tsconfig.editor.json": "719e677d23a27032768057d11778f881e9adf7a911cbcbe3ed4f86704600bbad"
+  },
+  "source_sha256": {
+    "src/aframe-loader.ts": "7a123915144b0ee88c681a49bf3f1efdb8d5444fb28e6e5ee1fdff87ef48be26",
+    "src/config.ts": "94c11342113ea26f49dd00ced0913ada31b876726fcd34f9a511e6eb6b0ad5fa",
+    "src/editor-schema.ts": "e0488c80ba66df04ca3a5defab960704ab7648190adab98e0857b7bc57e56ead",
+    "src/extension.ts": "142d5aa4216832decee9632a01cb24ff83c558bccfc7df21be41429efc23b34f",
+    "src/globals.d.ts": "465405e5deb8841fc4a81a42797a4743d6576c6274060aded031ec02361137f4",
+    "src/index.ts": "e4fdf792c01b74405ea031bac9612d6b01934b635a8a093fa244595fa7ae375a",
+    "src/runtime-capability.ts": "1a35338eaf527a1893b346e21a1f5b0b236eb3bf8d93210de6eeae7dff448198",
+    "src/template-validation.ts": "998af3f8b2db555baae23f3aa597d331d5c217ee4438b052be6357735b69a8a1",
+    "src/vrm.ts": "81e0bfe396823f098d22dfe6cc16256ddc9dd0442fbc94ba8841cae1de5fd087"
+  },
+  "emitted_sha256": {
+    "lib-editor/schemas/block-editor-template-compat.schema.json": "10d385bedffe4133c374059278ed7393023055af23d2a26d49099d5ffaac0e75",
+    "lib-editor/src/editor-schema.d.ts": "cbe86a73ec3f2673da0c4d6bc48ff4d9152faaebd0bb4b5807b48b8d6ad09bd7",
+    "lib-editor/src/editor-schema.js": "c04b24e30465589b35b53ff4d3e682b40b429452885011e58b16ed828838c935",
+    "lib-editor/src/template-validation.d.ts": "dec81b820da071d823a9909dd65a0a6b36d08391ddce5a0bd7c50f7b686ee021",
+    "lib-editor/src/template-validation.js": "9726e75a5f5d2f8d9e75627b2a131245a8bc9fc84da0d23b4b3035eca7a0e2b1"
+  },
+  "verification": {
+    "frozen_install": "passed with exact allowBuilds Git URLs",
+    "frozen_log_sha256": "419074a6a544bb68539b45353ce2b25d03b5b1156db9ca7daea37eba81d341d0",
+    "typecheck": "passed",
+    "targeted_runtime_tests": 36,
+    "runtime_log_sha256": "445b8e63b05c241363491b17022439fa5264746ff98d071ff4c27f313074f2c3",
+    "resolved_R4_type_consumer": "passed; skipLibCheck:true for legacy RJSF dependency declaration limitation",
+    "R4_fixture_sha256": "fa95292e9c204f69045fc2f96cc5fcaf53c9f75c7221a0064710231bad4ad5dc",
+    "R4_type_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pure_no_DOM_consumer": "passed; skipLibCheck:false",
+    "source_emitted_hash_matches": 5,
+    "isolated_consumer": "/tmp/schema-owner-consumer-eB9Cul",
+    "global_accesses": 0,
+    "React_present": false
+  },
+  "validation_frameworks": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  },
+  "reviewed_source_unchanged": true,
+  "rollback_dependency_pins": {
+    "@kubohiroya/turbowarp-extension-data-editor": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#a1ab4f4f5b384eef08ef26e544186ee9d8ad4543"
+  },
+  "scope": {
+    "new_editor_registrations": false,
+    "stage2_or_later": false,
+    "GUI_dependency_updated": false,
+    "PR_merge_npm_publish": false
+  },
+  "stage2_start_condition": "Select corrected artifacts in GUI and align manifest/lock/resolution before binding/forms; GUI still public 0.1.0."
+}

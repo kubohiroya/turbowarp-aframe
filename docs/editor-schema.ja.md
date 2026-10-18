@@ -1,5 +1,7 @@
 # 段階1: A-Frame固定Schema
 
+> 現在のGit依存固定・実解決・検証結果は[editor-schema-publication.ja.md](editor-schema-publication.ja.md)と同名JSONを参照。以下は依存更新前の採取履歴として保持する。
+
 追跡: https://github.com/kubohiroya/turbowarp-aframe/issues/19 。共通親はextension-data-editor #18。
 
 `./editor-schema`はtemplateSchemaBundle、validateTemplateInput、validateTemplateNode、decodeTemplateSourceを公開する。拡張本体やDOMをimportしない。decodeはJSONのsource/raw dataを保持し、検証は値のString化やclass重複除去を行わない。
