@@ -1,0 +1,50 @@
+{
+  "stage": "S1-4/p",
+  "repository": "turbowarp-aframe",
+  "issue": "https://github.com/kubohiroya/turbowarp-aframe/issues/19",
+  "base": "52069c5770a87a78a67094099b1704fc58560713",
+  "branch": "feat/schema/stage1-aframe",
+  "targeted_tests_passed": 36,
+  "typecheck": "passed",
+  "existing_build_and_editor_emit": "passed",
+  "source_absent_isolated_import": "passed",
+  "isolated_no_DOM_skipLibCheck_false": "passed",
+  "resolved_dependencies": {
+    "@kubohiroya/turbowarp-extension-data-editor": {
+      "version": "0.1.0",
+      "resolved_path": "/private/tmp/schema-stage1-worktrees-20261018/aframe/node_modules/.pnpm/@kubohiroya+turbowarp-extension-data-editor@https+++codeload.github.com+kubohiroya+turb_5f902832b16dc00a1fc95546529ab82c/node_modules/@kubohiroya/turbowarp-extension-data-editor",
+      "manifest_sha256": "3e86db1bf667088a7a87ada19fc11573082918335dd281073464ca4fcebf74da",
+      "specifier": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#a1ab4f4f5b384eef08ef26e544186ee9d8ad4543",
+      "via": "@kubohiroya/turbowarp-aframe"
+    }
+  },
+  "emitted_sha256": {
+    "lib-editor/schemas/block-editor-template-compat.schema.json": "10d385bedffe4133c374059278ed7393023055af23d2a26d49099d5ffaac0e75",
+    "lib-editor/src/editor-schema.d.ts": "cbe86a73ec3f2673da0c4d6bc48ff4d9152faaebd0bb4b5807b48b8d6ad09bd7",
+    "lib-editor/src/editor-schema.js": "c04b24e30465589b35b53ff4d3e682b40b429452885011e58b16ed828838c935",
+    "lib-editor/src/template-validation.d.ts": "dec81b820da071d823a9909dd65a0a6b36d08391ddce5a0bd7c50f7b686ee021",
+    "lib-editor/src/template-validation.js": "9726e75a5f5d2f8d9e75627b2a131245a8bc9fc84da0d23b4b3035eca7a0e2b1"
+  },
+  "source_sha256": {
+    "src/aframe-loader.ts": "7a123915144b0ee88c681a49bf3f1efdb8d5444fb28e6e5ee1fdff87ef48be26",
+    "src/config.ts": "94c11342113ea26f49dd00ced0913ada31b876726fcd34f9a511e6eb6b0ad5fa",
+    "src/editor-schema.ts": "e0488c80ba66df04ca3a5defab960704ab7648190adab98e0857b7bc57e56ead",
+    "src/extension.ts": "142d5aa4216832decee9632a01cb24ff83c558bccfc7df21be41429efc23b34f",
+    "src/globals.d.ts": "465405e5deb8841fc4a81a42797a4743d6576c6274060aded031ec02361137f4",
+    "src/index.ts": "e4fdf792c01b74405ea031bac9612d6b01934b635a8a093fa244595fa7ae375a",
+    "src/runtime-capability.ts": "1a35338eaf527a1893b346e21a1f5b0b236eb3bf8d93210de6eeae7dff448198",
+    "src/template-validation.ts": "998af3f8b2db555baae23f3aa597d331d5c217ee4438b052be6357735b69a8a1",
+    "src/vrm.ts": "81e0bfe396823f098d22dfe6cc16256ddc9dd0442fbc94ba8841cae1de5fd087"
+  },
+  "source_emit_hash_matches": 5,
+  "side_effect_guarded_isolated_import": "0 DOM/VM/network global accesses; React absent",
+  "scope": {
+    "new_extension_editor_registration": false,
+    "schema_authoring_UI": false,
+    "arbitrary_schema_UI": false,
+    "GUI_dependency_change": false,
+    "cause_investigation": false
+  },
+  "record_kind": "historical snapshot before Git artifact alignment",
+  "current_record": "editor-schema-publication.json"
+}

@@ -1,3 +1,4 @@
+import {validateTemplateNode, type TemplateNode} from './template-validation.js';
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
 import {
@@ -26,15 +27,6 @@ interface BlockDefinition {
   arguments: Record<string, DefinitionArgument>;
 }
 
-interface TemplateNode {
-  type?: string;
-  id?: string;
-  class?: string | string[];
-  classes?: string[];
-  data?: Record<string, unknown>;
-  attributes?: Record<string, unknown>;
-  children?: TemplateNode[];
-}
 
 interface SceneNode {
   id: string;
@@ -141,15 +133,7 @@ interface VrmHostElement {
 const blockDefinitions = definitions.blocks as readonly BlockDefinition[];
 const ROOT_ID = 'scene';
 const DOM_EVENT_TYPES = ['click', 'tap', 'pointerenter', 'pointerleave'] as const;
-const TEMPLATE_NODE_KEYS = new Set([
-  'attributes',
-  'children',
-  'class',
-  'classes',
-  'data',
-  'id',
-  'type'
-]);
+
 
 export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private readonly nodes = new Map<string, SceneNode>();
@@ -1235,66 +1219,8 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
 
   private parseTemplate(source: string): TemplateNode {
     const value: unknown = JSON.parse(source);
-    this.validateTemplateNode(value, 'template');
+    validateTemplateNode(value, 'template');
     return value as TemplateNode;
-  }
-
-  private validateTemplateNode(value: unknown, path: string): asserts value is TemplateNode {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      throw new TypeError(`A-Frame ${path} must be an object.`);
-    }
-    const node = value as Record<string, unknown>;
-    for (const key of Object.keys(node)) {
-      if (!TEMPLATE_NODE_KEYS.has(key)) {
-        throw new TypeError(`A-Frame ${path}.${key} is not supported.`);
-      }
-    }
-    this.validateOptionalString(node['type'], `${path}.type`);
-    this.validateOptionalString(node['id'], `${path}.id`);
-    this.validateTemplateClass(node['class'], `${path}.class`);
-    this.validateOptionalStringArray(node['classes'], `${path}.classes`);
-    this.validateStringRecord(node['data'], `${path}.data`);
-    this.validateStringRecord(node['attributes'], `${path}.attributes`);
-    const children = node['children'];
-    if (children === undefined) return;
-    if (!Array.isArray(children)) {
-      throw new TypeError(`A-Frame ${path}.children must be an array.`);
-    }
-    children.forEach((child, index) => {
-      this.validateTemplateNode(child, `${path}.children[${index}]`);
-    });
-  }
-
-  private validateTemplateClass(value: unknown, path: string): void {
-    if (value === undefined || typeof value === 'string') return;
-    if (Array.isArray(value) && value.every((item) => typeof item === 'string')) return;
-    throw new TypeError(`A-Frame ${path} must be a string or string array.`);
-  }
-
-  private validateOptionalStringArray(value: unknown, path: string): void {
-    if (value === undefined) return;
-    if (Array.isArray(value) && value.every((item) => typeof item === 'string')) return;
-    throw new TypeError(`A-Frame ${path} must be a string array.`);
-  }
-
-  private validateOptionalString(value: unknown, path: string): void {
-    if (value === undefined || typeof value === 'string') return;
-    throw new TypeError(`A-Frame ${path} must be a string.`);
-  }
-
-  private validateStringRecord(value: unknown, path: string): void {
-    if (value === undefined) return;
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      throw new TypeError(`A-Frame ${path} must be an object.`);
-    }
-    for (const [key, recordValue] of Object.entries(value)) {
-      if (key.trim().length === 0) {
-        throw new TypeError(`A-Frame ${path} keys must be non-empty strings.`);
-      }
-      if (recordValue === undefined) {
-        throw new TypeError(`A-Frame ${path}.${key} must not be undefined.`);
-      }
-    }
   }
 
   private normalizeClasses(template: TemplateNode): string[] {
