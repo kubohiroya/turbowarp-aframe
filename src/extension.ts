@@ -1,3 +1,4 @@
+import {registerSourceEditors} from './source-editors.js';
 import {validateTemplateNode, type TemplateNode} from './template-validation.js';
 import {extensionConfig} from './config';
 import definitions from './block-definitions.json';
@@ -151,7 +152,17 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private disposed = false;
   private readonly vrms = new VrmAvatars(() => this.getThree() as unknown as VrmThreeApi | null);
 
+  private readonly removeSourceEditors: () => void;
+  private readonly handleSourceEditorDispose = (): void => {
+    this.removeSourceEditors();
+    const runtime = Scratch.vm?.runtime as {off?: (event: string, listener: () => void) => void} | undefined;
+    runtime?.off?.('RUNTIME_DISPOSED', this.handleSourceEditorDispose);
+  };
+
   public constructor() {
+    this.removeSourceEditors = registerSourceEditors(Scratch);
+    const editorRuntime = Scratch.vm?.runtime as {on?: (event: string, listener: () => void) => void} | undefined;
+    editorRuntime?.on?.('RUNTIME_DISPOSED', this.handleSourceEditorDispose);
     this.resetGraph();
     this.runtimeCapability = createRuntimeCapability(
       {
@@ -624,6 +635,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   public dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.handleSourceEditorDispose();
     for (const key of [...this.animationPlaybacks.keys()]) {
       this.stopPlayback(key, true);
     }
