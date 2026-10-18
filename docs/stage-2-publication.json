@@ -1,0 +1,67 @@
+{
+  "scope": "stage-2-stable-release",
+  "version": "0.8.0",
+  "previousVersion": "0.7.0",
+  "baseHead": "224775e7207e221d4c91b2ee4a7229d61c44c94f",
+  "issue": "https://github.com/kubohiroya/turbowarp-aframe/issues/21",
+  "issueWrites": "not performed in this release; Ref only, no automatic close",
+  "dependencies": {
+    "@kubohiroya/turbowarp-extension-data-editor": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#76fa1d50a3c188082ceef723ea018a9d8769ea6e"
+  },
+  "commonBuildInfo": {
+    "name": "@kubohiroya/turbowarp-extension-data-editor",
+    "version": "0.2.0",
+    "repository": "https://github.com/kubohiroya/turbowarp-extension-data-editor",
+    "revision": "76fa1d50a3c188082ceef723ea018a9d8769ea6e",
+    "sourceState": "archive",
+    "sourceSha256": "912efc0438710958698527aa5c26a33b0b1c2da280f91d36b048f6f2389a48f0",
+    "capabilities": {
+      "preparedSource": 1
+    }
+  },
+  "commonMainTarballSha256": "f51d14a502442336d6803009e3f6780fb03f7c3c51203287fed83073551a9194",
+  "commonMainTarballBuildInfo": {
+    "name": "@kubohiroya/turbowarp-extension-data-editor",
+    "version": "0.2.0",
+    "repository": "https://github.com/kubohiroya/turbowarp-extension-data-editor",
+    "revision": "76fa1d50a3c188082ceef723ea018a9d8769ea6e",
+    "sourceState": "commit",
+    "sourceSha256": "912efc0438710958698527aa5c26a33b0b1c2da280f91d36b048f6f2389a48f0",
+    "capabilities": {
+      "preparedSource": 1
+    }
+  },
+  "commonProvenance": "Git prepare archive and main pack commit identify the same revision/sourceSha256; provenance sourceState is intentionally distinguished",
+  "fastUri": "3.1.8 across direct/common-AJV and all lock nodes",
+  "reactDomTestPeer": "devDependency 18.3.1 exact; no production API/permission change",
+  "node": "22.23.3",
+  "packageManager": "pnpm@11.11.0",
+  "fullTests": 60,
+  "fullTestFiles": 6,
+  "generatedFiles": 7,
+  "generatedSha256": {
+    "dist/extension-manifest.json": "8eac539f8ac68b78207e43ebc928834d66b694996db8acde47d916b34652988a",
+    "dist/turbowarp-aframe.js": "34c3555fcb97134f5d5028c39c2174230181ea4f851276f124ae98317fe94f97",
+    "lib-editor/schemas/block-editor-template-compat.schema.json": "10d385bedffe4133c374059278ed7393023055af23d2a26d49099d5ffaac0e75",
+    "lib-editor/src/editor-schema.d.ts": "cbe86a73ec3f2673da0c4d6bc48ff4d9152faaebd0bb4b5807b48b8d6ad09bd7",
+    "lib-editor/src/template-validation.js": "9726e75a5f5d2f8d9e75627b2a131245a8bc9fc84da0d23b4b3035eca7a0e2b1",
+    "lib-editor/src/editor-schema.js": "c04b24e30465589b35b53ff4d3e682b40b429452885011e58b16ed828838c935",
+    "lib-editor/src/template-validation.d.ts": "dec81b820da071d823a9909dd65a0a6b36d08391ddce5a0bd7c50f7b686ee021"
+  },
+  "samePathTwoBuildsMatch": true,
+  "freshCrossPathBuildMatches": true,
+  "productionAudit": "0 vulnerabilities",
+  "historicalStage2Subset": {
+    "count": 659,
+    "note": "prior whole-cohort related cases; not added to current full suite",
+    "guiCases": 5,
+    "stepsPerCase": 8
+  },
+  "flags": {
+    "blockEditorSourceForms": false,
+    "blockEditorDialogsRequired": true
+  },
+  "postCommitChecks": "repository check-dist/docs Git guards run after commit; CI outcome recorded in PR and aggregate",
+  "publication": "user-authorized commit/push/PR/squash merge and npm release; npm publisher is coordinated separately",
+  "rollback": "flag OFF; reverse dependency revert package/lock/allowBuilds; retain published npm versions and publish fixes under new versions"
+}
