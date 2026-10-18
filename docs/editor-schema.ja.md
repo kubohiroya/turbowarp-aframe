@@ -11,3 +11,9 @@
 確認: 型検査、互換fixtureと既存runtime対象テスト35件、既存Vite build＋独立JS/型/resource emit、srcなし隔離package importとDOMなし・skipLibCheck:falseのconsumer型検査が成功。既存strict Schemaは変更していない。
 
 段階2のフォーム登録・source encode・binding、段階4の候補UIは未実装。既存GUIフラグの既定OFFを維持する。rollbackは新pure入口の利用を外すか、このIssueのcommitをrevertする。保存済みsourceの移行は不要。
+
+## S1-5の最終確認
+
+対象は合計36ケース（増分検証を含む）。srcを除いた実packageでReact不在・DOM/VM/通信globalアクセス0、skipLibCheck:falseの型検査を確認し、独立生成5ファイルを再emitと全SHA-256照合した。16契約の横断fixtureと依存artifact照合の記録は共通repoのschema-stage1-*.jsonを参照。既存生成基準は保持する。
+
+validateTemplateSourceを追加し、形式不正・未知variantでも元sourceを保持した安全な診断を返す。raw parser例外を診断へ混ぜない。

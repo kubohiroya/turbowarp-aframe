@@ -26,3 +26,9 @@ describe('existing A-Frame data compatibility', () => {
     expect(result.kind).toBe('invalid');expect(result.diagnostics[0]?.phase).toBe('semantic');
   });
 });
+
+import {validateTemplateSource} from '../src/editor-schema.js';
+it('source boundary retains invalid input without exposing parser text in diagnostics', () => {
+ const source='{private malformed';const result=validateTemplateSource(source,context);expect(result.source).toBe(source);expect(result.result.kind).toBe('invalid');expect(JSON.stringify(result.result)).not.toContain('private');
+ expect(validateTemplateSource('{"type":"","classes":["a","a"]}',context).result.kind).toBe('valid');
+});
