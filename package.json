@@ -32,7 +32,8 @@
     "README.md",
     "README.ja.md",
     "LICENSE",
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "lib-editor/"
   ],
   "publishConfig": {
     "access": "public",
@@ -45,7 +46,7 @@
   "scripts": {
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
-    "build": "vite build",
+    "build": "vite build && npm run build:editor",
     "lint": "eslint src tests vite.config.ts",
     "format": "eslint src tests vite.config.ts --fix",
     "test": "vitest run",
@@ -54,7 +55,9 @@
     "repo:check": "node scripts/check-repo.ts",
     "pack:check": "npm pack --dry-run --ignore-scripts",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run docs:check && pnpm run check:dist && pnpm run repo:check && pnpm run pack:check",
-    "check:dist": "pnpm run build && node scripts/check-dist.ts"
+    "check:dist": "pnpm run build && node scripts/check-dist.ts",
+    "build:editor": "tsc -p tsconfig.editor.json",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -69,5 +72,15 @@
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.2",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@kubohiroya/turbowarp-extension-data-editor": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#a1ab4f4f5b384eef08ef26e544186ee9d8ad4543"
+  },
+  "exports": {
+    "./*": "./*",
+    "./editor-schema": {
+      "types": "./lib-editor/src/editor-schema.d.ts",
+      "import": "./lib-editor/src/editor-schema.js"
+    }
   }
 }

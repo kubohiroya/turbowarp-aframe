@@ -19,6 +19,56 @@
   	docsURI: "https://kubohiroya.github.io/turbowarp-aframe/",
   	blockIconURI: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iNiIgeT0iOCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzEyMTgyNiIvPjxwYXRoIGQ9Ik0xNCAzMmw5LTE4IDkgMThoLTRsLTItNWgtNmwtMiA1aC00Wm03LjQtOGgzLjJsLTEuNi00LjEtMS42IDQuMVoiIGZpbGw9IiM0Q0ZGQjAiLz48Y2lyY2xlIGN4PSIzNiIgY3k9IjE0IiByPSI0IiBmaWxsPSIjRkZBQjE5Ii8+PC9zdmc+"
   };
+  //#endregion
+  //#region src/template-validation.ts
+  var TEMPLATE_NODE_KEYS = /* @__PURE__ */ new Set([
+  	"attributes",
+  	"children",
+  	"class",
+  	"classes",
+  	"data",
+  	"id",
+  	"type"
+  ]);
+  function validateTemplateNode(value, path) {
+  	if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError(`A-Frame ${path} must be an object.`);
+  	const node = value;
+  	for (const key of Object.keys(node)) if (!TEMPLATE_NODE_KEYS.has(key)) throw new TypeError(`A-Frame ${path}.${key} is not supported.`);
+  	validateOptionalString(node["type"], `${path}.type`);
+  	validateOptionalString(node["id"], `${path}.id`);
+  	validateTemplateClass(node["class"], `${path}.class`);
+  	validateOptionalStringArray(node["classes"], `${path}.classes`);
+  	validateStringRecord(node["data"], `${path}.data`);
+  	validateStringRecord(node["attributes"], `${path}.attributes`);
+  	const children = node["children"];
+  	if (children === void 0) return;
+  	if (!Array.isArray(children)) throw new TypeError(`A-Frame ${path}.children must be an array.`);
+  	children.forEach((child, index) => {
+  		validateTemplateNode(child, `${path}.children[${index}]`);
+  	});
+  }
+  function validateTemplateClass(value, path) {
+  	if (value === void 0 || typeof value === "string") return;
+  	if (Array.isArray(value) && value.every((item) => typeof item === "string")) return;
+  	throw new TypeError(`A-Frame ${path} must be a string or string array.`);
+  }
+  function validateOptionalStringArray(value, path) {
+  	if (value === void 0) return;
+  	if (Array.isArray(value) && value.every((item) => typeof item === "string")) return;
+  	throw new TypeError(`A-Frame ${path} must be a string array.`);
+  }
+  function validateOptionalString(value, path) {
+  	if (value === void 0 || typeof value === "string") return;
+  	throw new TypeError(`A-Frame ${path} must be a string.`);
+  }
+  function validateStringRecord(value, path) {
+  	if (value === void 0) return;
+  	if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError(`A-Frame ${path} must be an object.`);
+  	for (const [key, recordValue] of Object.entries(value)) {
+  		if (key.trim().length === 0) throw new TypeError(`A-Frame ${path} keys must be non-empty strings.`);
+  		if (recordValue === void 0) throw new TypeError(`A-Frame ${path}.${key} must not be undefined.`);
+  	}
+  }
   var block_definitions_default = {
   	extensionName: "TurboWarp-A-Frame",
   	blocks: [
@@ -7010,15 +7060,6 @@
   	"pointerenter",
   	"pointerleave"
   ];
-  var TEMPLATE_NODE_KEYS = /* @__PURE__ */ new Set([
-  	"attributes",
-  	"children",
-  	"class",
-  	"classes",
-  	"data",
-  	"id",
-  	"type"
-  ]);
   var TurboWarpAFrameExtension = class {
   	constructor() {
   		this.nodes = /* @__PURE__ */ new Map();
@@ -7872,47 +7913,8 @@
   	}
   	parseTemplate(source) {
   		const value = JSON.parse(source);
-  		this.validateTemplateNode(value, "template");
+  		validateTemplateNode(value, "template");
   		return value;
-  	}
-  	validateTemplateNode(value, path) {
-  		if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError(`A-Frame ${path} must be an object.`);
-  		const node = value;
-  		for (const key of Object.keys(node)) if (!TEMPLATE_NODE_KEYS.has(key)) throw new TypeError(`A-Frame ${path}.${key} is not supported.`);
-  		this.validateOptionalString(node["type"], `${path}.type`);
-  		this.validateOptionalString(node["id"], `${path}.id`);
-  		this.validateTemplateClass(node["class"], `${path}.class`);
-  		this.validateOptionalStringArray(node["classes"], `${path}.classes`);
-  		this.validateStringRecord(node["data"], `${path}.data`);
-  		this.validateStringRecord(node["attributes"], `${path}.attributes`);
-  		const children = node["children"];
-  		if (children === void 0) return;
-  		if (!Array.isArray(children)) throw new TypeError(`A-Frame ${path}.children must be an array.`);
-  		children.forEach((child, index) => {
-  			this.validateTemplateNode(child, `${path}.children[${index}]`);
-  		});
-  	}
-  	validateTemplateClass(value, path) {
-  		if (value === void 0 || typeof value === "string") return;
-  		if (Array.isArray(value) && value.every((item) => typeof item === "string")) return;
-  		throw new TypeError(`A-Frame ${path} must be a string or string array.`);
-  	}
-  	validateOptionalStringArray(value, path) {
-  		if (value === void 0) return;
-  		if (Array.isArray(value) && value.every((item) => typeof item === "string")) return;
-  		throw new TypeError(`A-Frame ${path} must be a string array.`);
-  	}
-  	validateOptionalString(value, path) {
-  		if (value === void 0 || typeof value === "string") return;
-  		throw new TypeError(`A-Frame ${path} must be a string.`);
-  	}
-  	validateStringRecord(value, path) {
-  		if (value === void 0) return;
-  		if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError(`A-Frame ${path} must be an object.`);
-  		for (const [key, recordValue] of Object.entries(value)) {
-  			if (key.trim().length === 0) throw new TypeError(`A-Frame ${path} keys must be non-empty strings.`);
-  			if (recordValue === void 0) throw new TypeError(`A-Frame ${path}.${key} must not be undefined.`);
-  		}
   	}
   	normalizeClasses(template) {
   		return [...Array.isArray(template.class) ? template.class : String(template.class ?? "").split(/\s+/), ...template.classes ?? []].map((value) => this.normalizeToken(value)).filter((value) => value.length > 0);
