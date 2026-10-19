@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-aframe",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "A TurboWarp extension for declarative A-Frame scene graphs.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
@@ -33,7 +33,9 @@
     "README.ja.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
-    "lib-editor/"
+    "lib-editor/",
+    "schemas/",
+    "docs/fixed-input-editors.ja.md"
   ],
   "publishConfig": {
     "access": "public",
@@ -61,8 +63,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@kubohiroya/turbowarp-extension-manifest": "0.2.0",
-    "@kubohiroya/vite-plugin-turbowarp-extension": "0.4.0",
+    "@kubohiroya/turbowarp-extension-manifest": "0.3.2",
+    "@kubohiroya/vite-plugin-turbowarp-extension": "0.6.1",
     "@pixiv/three-vrm": "3.5.5",
     "@types/node": "^24.13.3",
     "@types/three": "0.184.0",
@@ -75,7 +77,7 @@
     "react-dom": "18.3.1"
   },
   "dependencies": {
-    "@kubohiroya/turbowarp-extension-data-editor": "git+https://github.com/kubohiroya/turbowarp-extension-data-editor.git#76fa1d50a3c188082ceef723ea018a9d8769ea6e"
+    "@kubohiroya/turbowarp-extension-data-editor": "0.2.1"
   },
   "exports": {
     "./*": "./*",
@@ -83,5 +85,11 @@
       "types": "./lib-editor/src/editor-schema.d.ts",
       "import": "./lib-editor/src/editor-schema.js"
     }
+  },
+  "gitHead": "1b4afdb67ae4d5237ba8e115e4b80b5fc28efff0",
+  "x-turbowarp-source": {
+    "revision": "1b4afdb67ae4d5237ba8e115e4b80b5fc28efff0",
+    "revisionRole": "base-commit",
+    "sourceState": "local-release-overlay"
   }
 }

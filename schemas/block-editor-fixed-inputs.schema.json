@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kubohiroya.github.io/turbowarp-aframe/schemas/block-editor-fixed-inputs.schema.json",
+  "title": "turbowarp-aframe fixed input registration schema",
+  "$defs": {
+    "createScene": {
+      "type": "object",
+      "properties": {
+        "LAYER": {
+          "type": "string",
+          "enum": [
+            "above-stage",
+            "below-stage"
+          ]
+        }
+      }
+    },
+    "setPosition": {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Y": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Z": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "moveBy": {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Y": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Z": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "setRotation": {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Y": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Z": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "createAnimationClip": {
+      "type": "object",
+      "properties": {
+        "DURATION": {
+          "type": "number",
+          "minimum": -1,
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "addVectorKeyframeTrack": {
+      "type": "object",
+      "properties": {
+        "PATH": {
+          "type": "string",
+          "enum": [
+            ".position",
+            ".scale"
+          ]
+        }
+      }
+    },
+    "addQuaternionKeyframeTrack": {
+      "type": "object",
+      "properties": {
+        "PATH": {
+          "type": "string",
+          "enum": [
+            ".quaternion"
+          ]
+        }
+      }
+    },
+    "addEulerRotationKeyframeTrack": {
+      "type": "object",
+      "properties": {
+        "PATH": {
+          "type": "string",
+          "enum": [
+            ".quaternion"
+          ]
+        },
+        "UNIT": {
+          "type": "string",
+          "enum": [
+            "degrees",
+            "radians"
+          ]
+        }
+      }
+    },
+    "addPositionKeyframe": {
+      "type": "object",
+      "properties": {
+        "TIME": {
+          "type": "number",
+          "minimum": 0,
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "X": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Y": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Z": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "addScaleKeyframe": {
+      "type": "object",
+      "properties": {
+        "TIME": {
+          "type": "number",
+          "minimum": 0,
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "X": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Y": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Z": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "addEulerRotationKeyframe": {
+      "type": "object",
+      "properties": {
+        "TIME": {
+          "type": "number",
+          "minimum": 0,
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "X": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Y": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Z": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "UNIT": {
+          "type": "string",
+          "enum": [
+            "degrees",
+            "radians"
+          ]
+        }
+      }
+    },
+    "setAnimationTimeScale": {
+      "type": "object",
+      "properties": {
+        "SCALE": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "setVrmBoneRotation": {
+      "type": "object",
+      "properties": {
+        "X": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Y": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        },
+        "Z": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    },
+    "setVrmExpression": {
+      "type": "object",
+      "properties": {
+        "WEIGHT": {
+          "type": "number",
+          "$comment": "New finite numeric input uses NP-finite-new-input-v1. Existing raw is preserved on no-op; runtime clamp/floor is not applied to stored raw."
+        }
+      }
+    }
+  }
+}

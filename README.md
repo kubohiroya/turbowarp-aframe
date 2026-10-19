@@ -81,7 +81,7 @@ Load `dist/turbowarp-aframe.js` as an unsandboxed custom extension in TurboWarp.
 For package-based reuse, pin the version:
 
 ```bash
-pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.8.0
+pnpm add --save-exact @kubohiroya/turbowarp-aframe@0.8.1
 ```
 
 ## Block reference
@@ -566,3 +566,8 @@ pnpm run check
 SPDX-License-Identifier: MPL-2.0
 
 The bundle includes `@pixiv/three-vrm` under the MIT License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+
+## 固定入力の編集
+
+既定OFFの固定入力フォームと既存データの保持規則は[固定入力エディターの契約](docs/fixed-input-editors.ja.md)を参照してください。

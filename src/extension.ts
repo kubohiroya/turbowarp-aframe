@@ -1,3 +1,4 @@
+import {fixedInputRegistration} from './fixed-input-editors.js';
 import {registerSourceEditors} from './source-editors.js';
 import {validateTemplateNode, type TemplateNode} from './template-validation.js';
 import {extensionConfig} from './config';
@@ -199,13 +200,17 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     if (runtime) runtime[runtimeCapabilityKey] = this.runtimeCapability;
   }
 
+  private readonly fixedEditors = fixedInputRegistration(Scratch);
+
   public getInfo(): Record<string, unknown> {
+    const blocks = blockDefinitions.map((block) => this.toScratchBlock(block));
+    this.fixedEditors.ensure(blocks.map(block => `${extensionConfig.id}_${block.opcode}`));
     return {
       id: extensionConfig.id,
       name: Scratch.translate(definitions.extensionName),
       docsURI: extensionConfig.docsURI,
       blockIconURI: extensionConfig.blockIconURI,
-      blocks: blockDefinitions.map((block) => this.toScratchBlock(block))
+      blocks
     };
   }
 
@@ -633,6 +638,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   }
 
   public dispose(): void {
+    this.fixedEditors.dispose();
     if (this.disposed) return;
     this.disposed = true;
     this.handleSourceEditorDispose();
