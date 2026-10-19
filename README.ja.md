@@ -168,3 +168,8 @@ pnpm run check
 SPDX-License-Identifier: MPL-2.0
 
 bundleはMIT Licenseの`@pixiv/three-vrm`を含みます。[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)を参照してください。
+
+
+## 固定入力の編集
+
+既定OFFの固定入力フォームと既存データの保持規則は[固定入力エディターの契約](docs/fixed-input-editors.ja.md)を参照してください。

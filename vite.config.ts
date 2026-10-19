@@ -1,3 +1,4 @@
+import {normalizeBundleIndentation} from './vite-indent-plugin.js';
 /// <reference types="vitest/config" />
 import {defineConfig} from 'vite';
 import {extensionManifestPlugin} from '@kubohiroya/turbowarp-extension-manifest';
@@ -8,6 +9,7 @@ import {threeVrmFactoryPlugin} from './scripts/three-vrm-factory-plugin.js';
 
 export default defineConfig({
   plugins: [
+    normalizeBundleIndentation(),
     threeVrmFactoryPlugin(),
     turboWarpExtension({
       id: extensionConfig.id,
