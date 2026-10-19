@@ -52,16 +52,19 @@ describe('fixed owner contracts', () => {
     }
   });
   it('preserves legacy raw, unknown selections, blanks and reporter connections on no-op', () => {
-    for (const definition of fixedInputEditors) for (const binding of definition.bindings) {
-      for (const value of ['0x10', ' ', 'Infinity', '__unknown-old__', false] as const) {
-        const current = snapshot(definition, {...snapshot(definition).arguments, [binding.argument]: literal(value)});
-        const editor = createFixedInputEditor(definition);
-        expect(editor.prepareFixedSave(editor.readFixed(current), current)).toMatchObject({kind: 'ready', changes: []});
+    for (const definition of fixedInputEditors) {
+      // Reuse each contract editor while retaining every raw and reporter assertion.
+      const editor = createFixedInputEditor(definition);
+      for (const binding of definition.bindings) {
+        for (const value of ['0x10', ' ', 'Infinity', '__unknown-old__', false] as const) {
+          const current = snapshot(definition, {...snapshot(definition).arguments, [binding.argument]: literal(value)});
+          expect(editor.prepareFixedSave(editor.readFixed(current), current)).toMatchObject({kind: 'ready', changes: []});
+        }
+        const current = snapshot(definition, {...snapshot(definition).arguments, [binding.argument]: {kind: 'reporter'}});
+        const draft = editor.readFixed(current);
+        expect(editor.describeFixed!(draft, current).inputs[binding.argument]!.state).toBe('readonly');
+        expect(editor.prepareFixedSave(draft, current)).toMatchObject({kind: 'ready', changes: []});
       }
-      const current = snapshot(definition, {...snapshot(definition).arguments, [binding.argument]: {kind: 'reporter'}});
-      const editor = createFixedInputEditor(definition); const draft = editor.readFixed(current);
-      expect(editor.describeFixed!(draft, current).inputs[binding.argument]!.state).toBe('readonly');
-      expect(editor.prepareFixedSave(draft, current)).toMatchObject({kind: 'ready', changes: []});
     }
   });
   it('registers only real opcodes, rebinds changed scopes and APIs, rolls back partial failure and disposes once', () => {
