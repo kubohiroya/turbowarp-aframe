@@ -1,5 +1,7 @@
 # TurboWarp-A-Frame
 
+<img src="assets/block-icon.svg" alt="" width="48" height="48">
+
 [日本語](README.ja.md)
 
 TurboWarp-A-Frame is an unsandboxed TurboWarp extension for building declarative A-Frame scene graphs from blocks.
