@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-aframe",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "A TurboWarp extension for declarative A-Frame scene graphs.",
   "author": "Hiroya Kubo <hiroya@cuc.ac.jp>",
   "license": "MPL-2.0",
@@ -65,7 +65,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@kubohiroya/turbowarp-extension-manifest": "^0.3.2",
-    "@kubohiroya/vite-plugin-turbowarp-extension": "^0.6.1",
+    "@kubohiroya/vite-plugin-turbowarp-extension": "^0.8.0",
     "@pixiv/three-vrm": "3.5.5",
     "@types/node": "^24.13.3",
     "@types/three": "0.184.0",
@@ -78,7 +78,7 @@
     "react-dom": "18.3.1"
   },
   "dependencies": {
-    "@kubohiroya/turbowarp-extension-data-editor": "^0.3.3"
+    "@kubohiroya/turbowarp-extension-data-editor": "^0.3.4"
   },
   "exports": {
     "./*": "./*",
@@ -87,9 +87,9 @@
       "import": "./lib-editor/src/editor-schema.js"
     }
   },
-  "gitHead": "1b4afdb67ae4d5237ba8e115e4b80b5fc28efff0",
+  "gitHead": "c59e28a3911296826e6476cc97813b3c4fce485e",
   "x-turbowarp-source": {
-    "revision": "1b4afdb67ae4d5237ba8e115e4b80b5fc28efff0",
+    "revision": "c59e28a3911296826e6476cc97813b3c4fce485e",
     "revisionRole": "base-commit",
     "sourceState": "local-release-overlay"
   }
