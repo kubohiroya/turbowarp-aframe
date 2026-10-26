@@ -21,7 +21,7 @@ Scratch のスプライトや背景を 3D オブジェクトとして扱うの�
 
 ## 要件と安全性
 
-- Node.js 22 以上
+- Node.js 24 以上
 - Corepack 経由の pnpm
 - TurboWarp の unsandboxed extension support
 - jsDelivrへ接続できること。`create 3D scene`はそこからA-Frame 1.8.0を、versionとsubresource integrityで固定して読み込みます。自前のコピーを配信するオフライン会場のように、ページにA-Frame 1.8.0がすでにあれば何も読み込まず、ほかのversionがあれば拒否します
@@ -68,6 +68,7 @@ version 2は、scene操作に加えてVRMアバターを扱います。`loadVrm`
 ## インストール
 
 ```bash
+npm install --global corepack@latest
 corepack enable
 pnpm install --frozen-lockfile
 ```

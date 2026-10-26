@@ -21,7 +21,7 @@ It treats TurboWarp sprites and backdrops as places to run 3D scene logic, not a
 
 ## Requirements and safety
 
-- Node.js 22 or newer
+- Node.js 24 or newer
 - Corepack-managed pnpm
 - TurboWarp unsandboxed extension support
 - Network access to jsDelivr, from which `create 3D scene` loads A-Frame 1.8.0 pinned by version and subresource integrity; a page that already has A-Frame 1.8.0, such as an offline venue serving its own copy, loads nothing, and any other A-Frame version on the page is refused
@@ -68,6 +68,7 @@ The capability deliberately exposes declarative templates, selectors, and humano
 ## Install
 
 ```bash
+npm install --global corepack@latest
 corepack enable
 pnpm install --frozen-lockfile
 ```
