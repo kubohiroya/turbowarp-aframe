@@ -8,6 +8,16 @@ TurboWarp-A-Frame は、TurboWarp のブロックから宣言型の A-Frame シ�
 
 Scratch のスプライトや背景を 3D オブジェクトとして扱うのではなく、3D シーン定義とイベント処理を置く場所として扱います。3D ノードは id、class、data 属性、A-Frame 属性、template、selector、event で操作します。
 
+## 最小デモ
+
+[TurboWarp Editorで開く](https://turbowarp.org/editor?project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-aframe%2Fsamples%2Fmove-one-cube.sb3) · [SB3](https://kubohiroya.github.io/turbowarp-aframe/samples/move-one-cube.sb3)
+
+読み込み時に同梱拡張の「Run extension without sandbox」を選びAllow。緑の旗で立方体を作り、Spaceで立方体を右へ0.5移動します。再度緑の旗で初期状態に戻ります。
+
+WebGL対応ブラウザとjsDelivrへの接続が必要です。A-Frame 1.8.0を本体が読み込みます。停止ボタンでは描画シーンは残り、再実行時に置き換わります。
+
+[編集・再生成手順](samples/README.md)
+
 ## できること
 
 - TurboWarp から埋め込み A-Frame シーンを作成します。

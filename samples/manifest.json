@@ -1,0 +1,24 @@
+{
+  "baseURL": "https://kubohiroya.github.io/turbowarp-aframe/",
+  "extension": {
+    "id": "turbowarpaframe",
+    "bundle": "dist/turbowarp-aframe.js",
+    "unsandboxed": true
+  },
+  "samples": [
+    {
+      "name": "move-one-cube",
+      "title": "Move one cube",
+      "checks": [
+        {
+          "variable": "cube-count",
+          "equals": 1
+        }
+      ],
+      "keyCheck": {
+        "variable": "action",
+        "equals": "Cube moved +0.5 on x"
+      }
+    }
+  ]
+}
