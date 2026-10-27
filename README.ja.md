@@ -12,9 +12,9 @@ Scratch のスプライトや背景を 3D オブジェクトとして扱うの�
 
 [TurboWarp Editorで開く](https://turbowarp.org/editor?project_url=https%3A%2F%2Fkubohiroya.github.io%2Fturbowarp-aframe%2Fsamples%2Fmove-one-cube.sb3) · [SB3](https://kubohiroya.github.io/turbowarp-aframe/samples/move-one-cube.sb3)
 
-読み込み時に同梱拡張の「Run extension without sandbox」を選びAllow。緑の旗で立方体を作り、Spaceで立方体を右へ0.5移動します。再度緑の旗で初期状態に戻ります。
+読み込み時に同梱拡張の「Run extension without sandbox」を選びAllow。緑の旗で立方体を作り、Spaceで立方体を右へ0.5移動します。Cキーで立方体を削除し、再度緑の旗で初期状態に戻ります。
 
-WebGL対応ブラウザとjsDelivrへの接続が必要です。A-Frame 1.8.0を本体が読み込みます。停止ボタンでは描画シーンは残り、再実行時に置き換わります。
+WebGL対応ブラウザとjsDelivrへの接続が必要です。A-Frame 1.8.0を本体が読み込みます。停止ボタンやCキー後も描画キャンバスは残り、GPU描画の終了にはタブを閉じてください。シーン全体の終了ブロックは現在ありません。再実行時に旧シーンを置き換えます。
 
 [編集・再生成手順](samples/README.md)
 
