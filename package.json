@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-aframe",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "A TurboWarp extension for declarative A-Frame scene graphs.",
   "author": {
     "name": "Hiroya Kubo",
