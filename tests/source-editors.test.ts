@@ -1,5 +1,5 @@
 import {createBlockEditorService} from '@kubohiroya/turbowarp-extension-data-editor/rjsf';
-import {expect, it} from 'vitest';
+import {expect, it, vi} from 'vitest';
 import {createSourceEditorOptions, registerSourceEditors} from '../src/source-editors.js';
 import definitions from '../src/block-definitions.json';
 const targets: Record<string, readonly string[]> = {"loadTemplate": ["SOURCE"]};
@@ -51,4 +51,36 @@ it('registers and resolves every fully qualified opcode through the actual commo
   }
   remove(); remove();
   for (const option of options) for (const opcode of option.opcodes) expect(service.registry.resolve(opcode)).toBeUndefined();
+});
+
+class FakeRuntime {
+  private readonly listeners = new Map<string, Set<() => void>>();
+  public on(event: string, listener: () => void): void {
+    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
+    this.listeners.get(event)!.add(listener);
+  }
+  public off(event: string, listener: () => void): void {this.listeners.get(event)?.delete(listener);}
+  public emit(event: string): void {for (const listener of [...this.listeners.get(event) ?? []]) listener();}
+  public count(event: string): number {return this.listeners.get(event)?.size ?? 0;}
+}
+function tracking() {
+  const removes: Array<ReturnType<typeof vi.fn>> = [];
+  const register = vi.fn<(options: unknown) => () => void>(() => {const remove = vi.fn();removes.push(remove);return remove;});
+  return {register, removes, removedOnce: () => removes.every(remove => remove.mock.calls.length === 1)};
+}
+
+// Every project load disposes the runtime but keeps the extension loaded for the next project.
+it('registers the same source editors again once the next project has loaded', () => {
+  const runtime = new FakeRuntime();const {register, removedOnce} = tracking();
+  const remove = registerSourceEditors({gui: {blockEditors: {apiVersion: 1, registerSourceEditor: register}}, vm: {runtime}});
+  const n = createSourceEditorOptions().length;expect(register).toHaveBeenCalledTimes(n);
+  runtime.emit('RUNTIME_DISPOSED');expect(removedOnce()).toBe(true);
+  runtime.emit('PROJECT_LOADED');expect(register).toHaveBeenCalledTimes(2 * n);
+  expect(register.mock.calls.slice(n).map(call => (call[0] as {editorId: string}).editorId))
+    .toEqual(register.mock.calls.slice(0, n).map(call => (call[0] as {editorId: string}).editorId));
+  runtime.emit('PROJECT_LOADED');expect(register).toHaveBeenCalledTimes(2 * n);
+  remove();expect(removedOnce()).toBe(true);
+  runtime.emit('RUNTIME_DISPOSED');runtime.emit('PROJECT_LOADED');
+  expect(register).toHaveBeenCalledTimes(2 * n);
+  expect(runtime.count('RUNTIME_DISPOSED') + runtime.count('PROJECT_LOADED')).toBe(0);
 });

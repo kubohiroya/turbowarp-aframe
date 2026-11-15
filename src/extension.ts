@@ -153,17 +153,11 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
   private disposed = false;
   private readonly vrms = new VrmAvatars(() => this.getThree() as unknown as VrmThreeApi | null);
 
+  /** Releases on RUNTIME_DISPOSED and registers again on the next PROJECT_LOADED by itself. */
   private readonly removeSourceEditors: () => void;
-  private readonly handleSourceEditorDispose = (): void => {
-    this.removeSourceEditors();
-    const runtime = Scratch.vm?.runtime as {off?: (event: string, listener: () => void) => void} | undefined;
-    runtime?.off?.('RUNTIME_DISPOSED', this.handleSourceEditorDispose);
-  };
 
   public constructor() {
     this.removeSourceEditors = registerSourceEditors(Scratch);
-    const editorRuntime = Scratch.vm?.runtime as {on?: (event: string, listener: () => void) => void} | undefined;
-    editorRuntime?.on?.('RUNTIME_DISPOSED', this.handleSourceEditorDispose);
     this.resetGraph();
     this.runtimeCapability = createRuntimeCapability(
       {
@@ -641,7 +635,7 @@ export class TurboWarpAFrameExtension implements TurboWarpExtension {
     this.fixedEditors.dispose();
     if (this.disposed) return;
     this.disposed = true;
-    this.handleSourceEditorDispose();
+    this.removeSourceEditors();
     for (const key of [...this.animationPlaybacks.keys()]) {
       this.stopPlayback(key, true);
     }

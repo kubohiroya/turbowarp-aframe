@@ -14,17 +14,50 @@ export function createSourceEditorOptions(nowMs: () => number = Date.now): reado
   ];
 }
 
-/** Optional capability: old GUIs continue executing blocks without editor registration. */
+interface OptionalSourceHost {
+  gui?: {blockEditors?: {apiVersion?: number; registerSourceEditor?: (options: SourceEditorOptions) => () => void}};
+  vm?: {runtime?: {on?: (event: string, listener: () => void) => void; off?: (event: string, listener: () => void) => void}};
+}
+
+/**
+ * Optional capability: old GUIs continue executing blocks without editor registration.
+ *
+ * Every project load disposes the runtime, which releases the registrations, but the extension
+ * stays loaded for the next project: the same editors are registered again once that project has
+ * loaded. Only the returned remover is final.
+ */
 export function registerSourceEditors(scratch: unknown, nowMs: () => number = Date.now): () => void {
-  const api = (scratch as {gui?: {blockEditors?: {apiVersion?: number; registerSourceEditor?: (options: SourceEditorOptions) => () => void}}})?.gui?.blockEditors;
+  const host = (typeof scratch === 'object' && scratch !== null ? scratch : {}) as OptionalSourceHost;
+  const api = host.gui?.blockEditors;
   if (api?.apiVersion !== 1 || typeof api.registerSourceEditor !== 'function') return () => {};
   const removers: (() => void)[] = [];
-  try {
-    for (const options of createSourceEditorOptions(nowMs)) removers.push(api.registerSourceEditor(options));
-  } catch {
-    for (const remove of removers.reverse()) remove();
-    return () => {};
-  }
+  const release = () => {for (const remove of removers.splice(0).reverse()) remove();};
+  const register = (): boolean => {
+    try {
+      for (const options of createSourceEditorOptions(nowMs)) removers.push(api.registerSourceEditor!(options));
+      return true;
+    } catch {
+      release();
+      return false;
+    }
+  };
+  if (!register()) return () => {};
+  let released = false;
+  const runtimeDisposed = () => {release(); released = true;};
+  const projectLoaded = () => {
+    if (!released) return;
+    released = false;
+    register();
+  };
+  const runtime = host.vm?.runtime;
+  runtime?.on?.('RUNTIME_DISPOSED', runtimeDisposed);
+  runtime?.on?.('PROJECT_LOADED', projectLoaded);
   let active = true;
-  return () => {if (active) {active = false; for (const remove of removers.reverse()) remove();}};
+  return () => {
+    if (!active) return;
+    active = false;
+    runtime?.off?.('RUNTIME_DISPOSED', runtimeDisposed);
+    runtime?.off?.('PROJECT_LOADED', projectLoaded);
+    release();
+  };
 }

@@ -9552,29 +9552,56 @@ var fixedInputEditors = [
 		bindings: [binding("setVrmExpression", "WEIGHT")]
 	}
 ];
-/** Register only currently declared opcodes; release obsolete feature-flag scopes. */
+/**
+* Register only currently declared opcodes; release obsolete feature-flag scopes.
+*
+* Every project load disposes the runtime, which releases the registrations, but the extension
+* stays loaded for the next project: the same opcodes are registered again once that project has
+* loaded. Only `dispose()` is final.
+*/
 function fixedInputRegistration(scratch) {
 	const host = typeof scratch === "object" && scratch !== null ? scratch : {};
 	let active;
 	let activeOpcodes = "";
+	let lastOpcodes;
 	const removers = [];
 	let disposed = false;
-	const dispose = () => {
-		host.vm?.runtime?.off?.("RUNTIME_DISPOSED", shutdown);
+	let released = false;
+	let listening = false;
+	const release = () => {
 		for (const remove of removers.splice(0).reverse()) remove();
 		active = void 0;
 		activeOpcodes = "";
 	};
+	const runtimeDisposed = () => {
+		release();
+		released = true;
+	};
+	const projectLoaded = () => {
+		if (!released || lastOpcodes === void 0) return;
+		released = false;
+		try {
+			registration.ensure(lastOpcodes);
+		} catch {}
+	};
 	const shutdown = () => {
 		disposed = true;
-		dispose();
+		released = false;
+		if (listening) {
+			host.vm?.runtime?.off?.("RUNTIME_DISPOSED", runtimeDisposed);
+			host.vm?.runtime?.off?.("PROJECT_LOADED", projectLoaded);
+			listening = false;
+		}
+		release();
 	};
-	return {
+	const registration = {
 		ensure(opcodes) {
 			const api = host.gui?.blockEditors;
 			const signature = [...new Set(opcodes)].sort().join("\0");
 			if (disposed || api === active && signature === activeOpcodes) return;
-			dispose();
+			release();
+			released = false;
+			lastOpcodes = [...opcodes];
 			if (api?.apiVersion !== 1 || typeof api.registerFixedInputEditor !== "function") return;
 			try {
 				for (const definition of fixedInputEditors) if (definition.opcodes.every((opcode) => opcodes.includes(opcode))) {
@@ -9584,14 +9611,19 @@ function fixedInputRegistration(scratch) {
 				}
 				active = api;
 				activeOpcodes = signature;
-				host.vm?.runtime?.on?.("RUNTIME_DISPOSED", shutdown);
+				if (!listening) {
+					host.vm?.runtime?.on?.("RUNTIME_DISPOSED", runtimeDisposed);
+					host.vm?.runtime?.on?.("PROJECT_LOADED", projectLoaded);
+					listening = true;
+				}
 			} catch (error) {
-				dispose();
+				release();
 				throw error;
 			}
 		},
 		dispose: shutdown
 	};
+	return registration;
 }
 function deepFreeze(value) {
 	if (value !== null && typeof value === "object") {
@@ -9936,23 +9968,51 @@ function createSourceEditorOptions(nowMs = Date.now) {
 		validationContext: context
 	}];
 }
-/** Optional capability: old GUIs continue executing blocks without editor registration. */
+/**
+* Optional capability: old GUIs continue executing blocks without editor registration.
+*
+* Every project load disposes the runtime, which releases the registrations, but the extension
+* stays loaded for the next project: the same editors are registered again once that project has
+* loaded. Only the returned remover is final.
+*/
 function registerSourceEditors(scratch, nowMs = Date.now) {
-	const api = scratch?.gui?.blockEditors;
+	const host = typeof scratch === "object" && scratch !== null ? scratch : {};
+	const api = host.gui?.blockEditors;
 	if (api?.apiVersion !== 1 || typeof api.registerSourceEditor !== "function") return () => {};
 	const removers = [];
-	try {
-		for (const options of createSourceEditorOptions(nowMs)) removers.push(api.registerSourceEditor(options));
-	} catch {
-		for (const remove of removers.reverse()) remove();
-		return () => {};
-	}
+	const release = () => {
+		for (const remove of removers.splice(0).reverse()) remove();
+	};
+	const register = () => {
+		try {
+			for (const options of createSourceEditorOptions(nowMs)) removers.push(api.registerSourceEditor(options));
+			return true;
+		} catch {
+			release();
+			return false;
+		}
+	};
+	if (!register()) return () => {};
+	let released = false;
+	const runtimeDisposed = () => {
+		release();
+		released = true;
+	};
+	const projectLoaded = () => {
+		if (!released) return;
+		released = false;
+		register();
+	};
+	const runtime = host.vm?.runtime;
+	runtime?.on?.("RUNTIME_DISPOSED", runtimeDisposed);
+	runtime?.on?.("PROJECT_LOADED", projectLoaded);
 	let active = true;
 	return () => {
-		if (active) {
-			active = false;
-			for (const remove of removers.reverse()) remove();
-		}
+		if (!active) return;
+		active = false;
+		runtime?.off?.("RUNTIME_DISPOSED", runtimeDisposed);
+		runtime?.off?.("PROJECT_LOADED", projectLoaded);
+		release();
 	};
 }
 var block_definitions_default = {
@@ -16956,13 +17016,8 @@ var TurboWarpAFrameExtension = class {
 		this.lastEvent = null;
 		this.disposed = false;
 		this.vrms = new VrmAvatars(() => this.getThree());
-		this.handleSourceEditorDispose = () => {
-			this.removeSourceEditors();
-			(Scratch.vm?.runtime)?.off?.("RUNTIME_DISPOSED", this.handleSourceEditorDispose);
-		};
 		this.fixedEditors = fixedInputRegistration(Scratch);
 		this.removeSourceEditors = registerSourceEditors(Scratch);
-		(Scratch.vm?.runtime)?.on?.("RUNTIME_DISPOSED", this.handleSourceEditorDispose);
 		this.resetGraph();
 		this.runtimeCapability = createRuntimeCapability({
 			createScene: (layer, mode) => this.createScene({
@@ -17370,7 +17425,7 @@ var TurboWarpAFrameExtension = class {
 		this.fixedEditors.dispose();
 		if (this.disposed) return;
 		this.disposed = true;
-		this.handleSourceEditorDispose();
+		this.removeSourceEditors();
 		for (const key of [...this.animationPlaybacks.keys()]) this.stopPlayback(key, true);
 		this.vrms.clear();
 		this.rootElement?.parentElement?.remove();

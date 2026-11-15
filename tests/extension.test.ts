@@ -601,3 +601,35 @@ describe('TurboWarpAFrameExtension', () => {
     expect(actions[0]?.stopped).toBe(true);
   });
 });
+
+class FakeRuntime {
+  private readonly listeners = new Map<string, Set<() => void>>();
+  public on(event: string, listener: () => void): void {
+    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
+    this.listeners.get(event)!.add(listener);
+  }
+  public off(event: string, listener: () => void): void {this.listeners.get(event)?.delete(listener);}
+  public emit(event: string): void {for (const listener of [...this.listeners.get(event) ?? []]) listener();}
+  public count(event: string): number {return this.listeners.get(event)?.size ?? 0;}
+}
+function tracking() {
+  const removes: Array<ReturnType<typeof vi.fn>> = [];
+  const register = vi.fn<(options: unknown) => () => void>(() => {const remove = vi.fn();removes.push(remove);return remove;});
+  return {register, removes, removedOnce: () => removes.every(remove => remove.mock.calls.length === 1)};
+}
+
+describe('block editors across project loads', () => {
+  // Every project load disposes the runtime but keeps the extension loaded for the next project.
+  it('registers the editors again for the next project until the extension is disposed', () => {
+    const runtime = new FakeRuntime();const fixed = tracking();const source = tracking();
+    Object.assign(Scratch, {vm: {runtime}, gui: {blockEditors: {apiVersion: 1, registerFixedInputEditor: fixed.register, registerSourceEditor: source.register}}});
+    const extension = new TurboWarpAFrameExtension();extension.getInfo();
+    const f = fixed.register.mock.calls.length;const s = source.register.mock.calls.length;
+    expect(f).toBeGreaterThan(0);expect(s).toBeGreaterThan(0);
+    runtime.emit('RUNTIME_DISPOSED');runtime.emit('PROJECT_LOADED');
+    expect(fixed.register).toHaveBeenCalledTimes(2 * f);expect(source.register).toHaveBeenCalledTimes(2 * s);
+    extension.dispose();expect(fixed.removedOnce()).toBe(true);expect(source.removedOnce()).toBe(true);
+    runtime.emit('RUNTIME_DISPOSED');runtime.emit('PROJECT_LOADED');
+    expect(fixed.register).toHaveBeenCalledTimes(2 * f);expect(source.register).toHaveBeenCalledTimes(2 * s);
+  });
+});
