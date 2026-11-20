@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-aframe",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "A TurboWarp extension for declarative A-Frame scene graphs.",
   "author": {
     "name": "Hiroya Kubo",
@@ -99,5 +99,31 @@
     "revision": "702b8b30cef5d3b27f1088a5fd436c5c5bfbdad8",
     "revisionRole": "base-commit",
     "sourceState": "local-release-overlay"
+  },
+  "turbowarpExtension": {
+    "resourceDeclaration": {
+      "schemaVersion": 1,
+      "resources": [
+        {
+          "type": "network",
+          "usage": "conditional",
+          "purpose": {
+            "en": "Load A-Frame and externally referenced 3D assets",
+            "ja": "A-Frameと外部参照の3D素材を取得する"
+          },
+          "condition": {
+            "en": "When A-Frame is not preloaded or a scene references external assets",
+            "ja": "A-Frameが事前読込されていない場合、またはシーンが外部素材を参照する場合"
+          },
+          "data": {
+            "direction": "download",
+            "content": {
+              "en": "A-Frame runtime, 3D/VRM models and image assets",
+              "ja": "A-Frame実行ライブラリー、3D・VRMモデル、画像素材"
+            }
+          }
+        }
+      ]
+    }
   }
 }
