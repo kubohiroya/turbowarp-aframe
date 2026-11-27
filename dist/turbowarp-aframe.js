@@ -11283,10 +11283,10 @@ function requireVersion(aframe) {
 	if (aframe.version !== "1.8.0") throw new Error(`A-Frame ${aframe.version ?? "(unknown version)"} is already on the page; TurboWarp-A-Frame needs ${aframeVersion}.`);
 }
 function createThreeVrm(__THREE__) {
-	const THREE = __THREE__, THREE4 = __THREE__, THREE2 = __THREE__, THREE3 = __THREE__, THREE5 = __THREE__, THREE6 = __THREE__, THREE7 = __THREE__, THREE8 = __THREE__, THREE11 = __THREE__, THREE9 = __THREE__, THREE10 = __THREE__, THREE13 = __THREE__, THREE12 = __THREE__, THREE14 = __THREE__, THREE15 = __THREE__, THREE16 = __THREE__, THREE52 = __THREE__, THREE22 = __THREE__, THREE17 = __THREE__, THREE42 = __THREE__, THREE32 = __THREE__, THREE18 = __THREE__, THREE19 = __THREE__, THREE33 = __THREE__, THREE23 = __THREE__, THREE43 = __THREE__, THREE53 = __THREE__, THREE72 = __THREE__, THREE20 = __THREE__, THREE24 = __THREE__, THREE34 = __THREE__, THREE44 = __THREE__, THREE54 = __THREE__, THREE62 = __THREE__, THREE92 = __THREE__, THREE82 = __THREE__, THREE102 = __THREE__, THREE132 = __THREE__, THREE122 = __THREE__, THREE112 = __THREE__, THREE142 = __THREE__, THREE21 = __THREE__, THREE27 = __THREE__, THREE25 = __THREE__, THREE26 = __THREE__, THREE28 = __THREE__, THREE29 = __THREE__;
-	const { BufferAttribute: BufferAttribute9 } = __THREE__;
+	const THREE = __THREE__, THREE4 = __THREE__, THREE2 = __THREE__, THREE3 = __THREE__, THREE5 = __THREE__, THREE6 = __THREE__, THREE7 = __THREE__, THREE8 = __THREE__, THREE11 = __THREE__, THREE9 = __THREE__, THREE10 = __THREE__, THREE13 = __THREE__, THREE12 = __THREE__, THREE14 = __THREE__, THREE15 = __THREE__, THREE16 = __THREE__, THREE52 = __THREE__, THREE22 = __THREE__, THREE17 = __THREE__, THREE42 = __THREE__, THREE32 = __THREE__, THREE18 = __THREE__, THREE19 = __THREE__, THREE33 = __THREE__, THREE23 = __THREE__, THREE43 = __THREE__, THREE53 = __THREE__, THREE72 = __THREE__, THREE20 = __THREE__, THREE24 = __THREE__, THREE34 = __THREE__, THREE44 = __THREE__, THREE54 = __THREE__, THREE62 = __THREE__, THREE92 = __THREE__, THREE82 = __THREE__, THREE172 = __THREE__, THREE112 = __THREE__, THREE102 = __THREE__, THREE122 = __THREE__, THREE132 = __THREE__, THREE142 = __THREE__, THREE152 = __THREE__, THREE162 = __THREE__, THREE182 = __THREE__, THREE222 = __THREE__, THREE202 = __THREE__, THREE192 = __THREE__, THREE21 = __THREE__, THREE232 = __THREE__, THREE25 = __THREE__, THREE28 = __THREE__, THREE26 = __THREE__, THREE27 = __THREE__, THREE29 = __THREE__, THREE30 = __THREE__;
+	const { BufferAttribute: BufferAttribute12 } = __THREE__;
 	/*!
-	* @pixiv/three-vrm v3.5.5
+	* @pixiv/three-vrm v3.6.0
 	* VRM file loader for three.js.
 	*
 	* Copyright (c) 2019-2026 pixiv Inc.
@@ -15909,10 +15909,324 @@ function createThreeVrm(__THREE__) {
 			super.updateMatrixWorld(force);
 		}
 	};
-	var VRMSpringBoneCollider = class extends THREE102.Object3D {
+	var VEC3_POSITIVE_X = /* @__PURE__ */ new THREE102.Vector3(1, 0, 0);
+	var VEC3_POSITIVE_Y2 = /* @__PURE__ */ new THREE102.Vector3(0, 1, 0);
+	var VEC3_NEGATIVE_Y = /* @__PURE__ */ new THREE102.Vector3(0, -1, 0);
+	var _quatBoneAxis = /* @__PURE__ */ new THREE102.Quaternion();
+	var VRMSpringBoneLimit = class {
+		/**
+		* The cache for the total rotation of the limit.
+		* It will be calculated in {@link internalPrecalcRotation}.
+		*
+		* This is a public property to use in {@link VRMSpringBoneLimitHelper}.
+		* Do not touch this property as we might change the interface without notice.
+		*/
+		get internalTotalRotationCache() {
+			return this._totalRotationCache;
+		}
+		constructor() {
+			this.rotation = new THREE102.Quaternion();
+			this._totalRotationCache = new THREE102.Quaternion();
+			this._totalRotationInvCache = new THREE102.Quaternion();
+		}
+		/**
+		* Precalculate the rotation of the limit.
+		*
+		* This is intended to be called from {@link VRMSpringBoneJoint.update}.
+		* Do not touch this property as we might change the interface without notice.
+		*
+		* @param worldSpaceInitialRotation The initial local rotation in the current world space
+		* @param boneAxis The initial axis of the child bone, in local unit
+		*/
+		internalPrecalcRotation(worldSpaceInitialRotation, boneAxis) {
+			if (boneAxis.equals(VEC3_NEGATIVE_Y)) _quatBoneAxis.setFromAxisAngle(VEC3_POSITIVE_X, Math.PI);
+			else _quatBoneAxis.setFromUnitVectors(VEC3_POSITIVE_Y2, boneAxis);
+			this._totalRotationCache.copy(worldSpaceInitialRotation).multiply(_quatBoneAxis).multiply(this.rotation);
+			this._totalRotationInvCache.copy(this._totalRotationCache).invert();
+		}
+	};
+	var SINGULARITY_EPSILON = Math.sqrt(Number.EPSILON);
+	var VRMSpringBoneLimitCone = class extends VRMSpringBoneLimit {
+		constructor(params) {
+			var _a, _b;
+			super();
+			this.angle = THREE112.MathUtils.clamp((_a = params == null ? void 0 : params.angle) != null ? _a : Math.PI, 0, Math.PI);
+			this.rotation = (_b = params == null ? void 0 : params.rotation) != null ? _b : new THREE112.Quaternion();
+		}
+		calculateLimit(tailDir) {
+			tailDir.applyQuaternion(this._totalRotationInvCache);
+			const cosLimitAngle = Math.cos(this.angle);
+			let isLimited = false;
+			if (tailDir.y < cosLimitAngle) {
+				isLimited = true;
+				const horizontalLengthSq = 1 - tailDir.y * tailDir.y;
+				if (horizontalLengthSq < SINGULARITY_EPSILON) {
+					tailDir.x = 0;
+					tailDir.z = Math.sqrt(1 - cosLimitAngle * cosLimitAngle);
+				} else {
+					const scale = Math.sqrt((1 - cosLimitAngle * cosLimitAngle) / horizontalLengthSq);
+					tailDir.x *= scale;
+					tailDir.z *= scale;
+				}
+				tailDir.y = cosLimitAngle;
+			}
+			tailDir.applyQuaternion(this._totalRotationCache);
+			return isLimited;
+		}
+	};
+	var QUARTER_ARC_SEGMENTS = 4;
+	var ARC_SEGMENTS = 4 * QUARTER_ARC_SEGMENTS;
+	var LimitConeBufferGeometry = class extends THREE122.BufferGeometry {
+		constructor(limit) {
+			super();
+			this._limit = limit;
+			this._currentAngle = limit.angle;
+			this._attrPos = new THREE122.BufferAttribute(new Float32Array(3 * (ARC_SEGMENTS + 1)), 3);
+			this.setAttribute("position", this._attrPos);
+			this._attrIndex = new THREE122.BufferAttribute(new Uint16Array(2 * (ARC_SEGMENTS + 4)), 1);
+			this.setIndex(this._attrIndex);
+			this._buildIndex();
+			this._buildPosition();
+		}
+		update() {
+			let shouldUpdateGeometry = false;
+			if (this._currentAngle !== this._limit.angle) {
+				this._currentAngle = this._limit.angle;
+				shouldUpdateGeometry = true;
+			}
+			if (shouldUpdateGeometry) this._buildPosition();
+		}
+		_buildPosition() {
+			const cos = Math.cos(this._currentAngle);
+			const sin = Math.sin(this._currentAngle);
+			for (let i = 0; i < ARC_SEGMENTS; i++) {
+				const t = 2 * Math.PI * (i / ARC_SEGMENTS);
+				this._attrPos.setXYZ(i, sin * Math.cos(t), cos, sin * Math.sin(t));
+			}
+			this._attrPos.setXYZ(ARC_SEGMENTS, 0, 0, 0);
+			this._attrPos.needsUpdate = true;
+		}
+		_buildIndex() {
+			for (let i = 0; i < ARC_SEGMENTS; i++) {
+				const i1 = (i + 1) % ARC_SEGMENTS;
+				this._attrIndex.setXY(i * 2, i, i1);
+			}
+			this._attrIndex.setXY(ARC_SEGMENTS * 2, ARC_SEGMENTS, 0);
+			this._attrIndex.setXY(ARC_SEGMENTS * 2 + 2, ARC_SEGMENTS, QUARTER_ARC_SEGMENTS);
+			this._attrIndex.setXY(ARC_SEGMENTS * 2 + 4, ARC_SEGMENTS, 2 * QUARTER_ARC_SEGMENTS);
+			this._attrIndex.setXY(ARC_SEGMENTS * 2 + 6, ARC_SEGMENTS, 3 * QUARTER_ARC_SEGMENTS);
+			this._attrIndex.needsUpdate = true;
+		}
+	};
+	var SINGULARITY_EPSILON2 = Math.sqrt(Number.EPSILON);
+	var VRMSpringBoneLimitHinge = class extends VRMSpringBoneLimit {
+		constructor(params) {
+			var _a, _b;
+			super();
+			this.angle = THREE132.MathUtils.clamp((_a = params == null ? void 0 : params.angle) != null ? _a : Math.PI, 0, Math.PI);
+			this.rotation = (_b = params == null ? void 0 : params.rotation) != null ? _b : new THREE132.Quaternion();
+		}
+		calculateLimit(tailDir) {
+			tailDir.applyQuaternion(this._totalRotationInvCache);
+			let isLimited = false;
+			const projectedLengthSq = tailDir.y * tailDir.y + tailDir.z * tailDir.z;
+			if (projectedLengthSq < SINGULARITY_EPSILON2) {
+				isLimited = true;
+				tailDir.set(0, 1, 0);
+			} else {
+				if (tailDir.x !== 0) {
+					isLimited = true;
+					const scale = 1 / Math.sqrt(projectedLengthSq);
+					tailDir.set(0, tailDir.y * scale, tailDir.z * scale);
+				}
+				const cosLimitAngle = Math.cos(this.angle);
+				if (tailDir.y < cosLimitAngle) {
+					isLimited = true;
+					const sinLimitAngle = Math.sqrt(1 - cosLimitAngle * cosLimitAngle);
+					const zSign = tailDir.z < 0 ? -1 : 1;
+					tailDir.y = cosLimitAngle;
+					tailDir.z = sinLimitAngle * zSign;
+				}
+			}
+			tailDir.applyQuaternion(this._totalRotationCache);
+			return isLimited;
+		}
+	};
+	var ARC_SEGMENTS2 = 17;
+	var LimitHingeBufferGeometry = class extends THREE142.BufferGeometry {
+		constructor(limit) {
+			super();
+			this._limit = limit;
+			this._currentAngle = limit.angle;
+			this._attrPos = new THREE142.BufferAttribute(new Float32Array(3 * (ARC_SEGMENTS2 + 1)), 3);
+			this.setAttribute("position", this._attrPos);
+			this._attrIndex = new THREE142.BufferAttribute(new Uint16Array(2 * (ARC_SEGMENTS2 + 1)), 1);
+			this.setIndex(this._attrIndex);
+			this._buildIndex();
+			this._buildPosition();
+		}
+		update() {
+			let shouldUpdateGeometry = false;
+			if (this._currentAngle !== this._limit.angle) {
+				this._currentAngle = this._limit.angle;
+				shouldUpdateGeometry = true;
+			}
+			if (shouldUpdateGeometry) this._buildPosition();
+		}
+		_buildPosition() {
+			for (let i = 0; i < ARC_SEGMENTS2; i++) {
+				const t = this._currentAngle * (2 * (i / (ARC_SEGMENTS2 - 1)) - 1);
+				this._attrPos.setXYZ(i, 0, Math.cos(t), Math.sin(t));
+			}
+			this._attrPos.setXYZ(ARC_SEGMENTS2, 0, 0, 0);
+			this._attrPos.needsUpdate = true;
+		}
+		_buildIndex() {
+			for (let i = 0; i < ARC_SEGMENTS2 - 1; i++) this._attrIndex.setXY(i * 2, i, i + 1);
+			this._attrIndex.setXY(ARC_SEGMENTS2 * 2 - 2, ARC_SEGMENTS2 - 1, ARC_SEGMENTS2);
+			this._attrIndex.setXY(ARC_SEGMENTS2 * 2, ARC_SEGMENTS2, 0);
+			this._attrIndex.needsUpdate = true;
+		}
+	};
+	var SINGULARITY_EPSILON3 = Math.sqrt(Number.EPSILON);
+	var VRMSpringBoneLimitSpherical = class extends VRMSpringBoneLimit {
+		constructor(params) {
+			var _a, _b, _c;
+			super();
+			this.pitch = THREE152.MathUtils.clamp((_a = params == null ? void 0 : params.pitch) != null ? _a : Math.PI, 0, Math.PI);
+			this.yaw = THREE152.MathUtils.clamp((_b = params == null ? void 0 : params.yaw) != null ? _b : Math.PI / 2, 0, Math.PI / 2);
+			this.rotation = (_c = params == null ? void 0 : params.rotation) != null ? _c : new THREE152.Quaternion();
+		}
+		calculateLimit(tailDir) {
+			tailDir.applyQuaternion(this._totalRotationInvCache);
+			let isLimited = false;
+			let pitch;
+			if (tailDir.y < -1 + SINGULARITY_EPSILON3) pitch = Math.PI;
+			else if (Math.abs(tailDir.x) > 1 - SINGULARITY_EPSILON3) pitch = 0;
+			else pitch = Math.atan2(tailDir.z, tailDir.y);
+			let yaw = Math.asin(THREE152.MathUtils.clamp(tailDir.x, -1, 1));
+			if (Math.abs(pitch) > this.pitch) {
+				isLimited = true;
+				pitch = this.pitch * Math.sign(pitch);
+			}
+			if (Math.abs(yaw) > this.yaw) {
+				isLimited = true;
+				yaw = this.yaw * Math.sign(yaw);
+			}
+			const cosYaw = Math.cos(yaw);
+			const sinYaw = Math.sin(yaw);
+			tailDir.set(sinYaw, cosYaw * Math.cos(pitch), cosYaw * Math.sin(pitch));
+			tailDir.applyQuaternion(this._totalRotationCache);
+			return isLimited;
+		}
+	};
+	var ARC_SEGMENTS3 = 17;
+	var LimitSphericalBufferGeometry = class extends THREE162.BufferGeometry {
+		constructor(limit) {
+			super();
+			this._limit = limit;
+			this._currentPitch = limit.pitch;
+			this._currentYaw = limit.yaw;
+			this._attrPos = new THREE162.BufferAttribute(new Float32Array(3 * (ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1) + 1)), 3);
+			this.setAttribute("position", this._attrPos);
+			this._attrIndex = new THREE162.BufferAttribute(new Uint16Array(2 * (5 * (ARC_SEGMENTS3 - 1) + 6)), 1);
+			this.setIndex(this._attrIndex);
+			this._buildIndex();
+			this._buildPosition();
+		}
+		update() {
+			let shouldUpdateGeometry = false;
+			if (this._currentPitch !== this._limit.pitch) {
+				this._currentPitch = this._limit.pitch;
+				shouldUpdateGeometry = true;
+			}
+			if (this._currentYaw !== this._limit.yaw) {
+				this._currentYaw = this._limit.yaw;
+				shouldUpdateGeometry = true;
+			}
+			if (shouldUpdateGeometry) this._buildPosition();
+		}
+		_buildPosition() {
+			for (let i = 0; i < ARC_SEGMENTS3; i++) {
+				const pitch = this._currentPitch * (2 * (i / (ARC_SEGMENTS3 - 1)) - 1);
+				this._attrPos.setXYZ(i, 0, Math.cos(pitch), Math.sin(pitch));
+			}
+			{
+				const cosYaw = Math.cos(this._currentYaw);
+				const sinYaw = Math.sin(this._currentYaw);
+				for (let i = 0; i < ARC_SEGMENTS3 - 1; i++) {
+					const pitch = this._currentPitch * (2 * (i / (ARC_SEGMENTS3 - 1)) - 1);
+					const cosPitch = Math.cos(pitch);
+					const sinPitch = Math.sin(pitch);
+					this._attrPos.setXYZ(ARC_SEGMENTS3 + i, sinYaw, cosYaw * cosPitch, cosYaw * sinPitch);
+					this._attrPos.setXYZ(ARC_SEGMENTS3 + 2 * (ARC_SEGMENTS3 - 1) + i, -sinYaw, cosYaw * cosPitch, -cosYaw * sinPitch);
+				}
+			}
+			{
+				const cosPitch = Math.cos(this._currentPitch);
+				const sinPitch = Math.sin(this._currentPitch);
+				for (let i = 0; i < ARC_SEGMENTS3 - 1; i++) {
+					const yaw = this._currentYaw * (2 * (i / (ARC_SEGMENTS3 - 1)) - 1);
+					const cosYaw = Math.cos(yaw);
+					const sinYaw = Math.sin(yaw);
+					this._attrPos.setXYZ(ARC_SEGMENTS3 + ARC_SEGMENTS3 - 1 + i, -sinYaw, cosYaw * cosPitch, cosYaw * sinPitch);
+					this._attrPos.setXYZ(ARC_SEGMENTS3 + 3 * (ARC_SEGMENTS3 - 1) + i, sinYaw, cosYaw * cosPitch, -cosYaw * sinPitch);
+				}
+			}
+			this._attrPos.setXYZ(ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1), 0, 0, 0);
+			this._attrPos.needsUpdate = true;
+		}
+		_buildIndex() {
+			for (let i = 0; i < ARC_SEGMENTS3 - 1; i++) this._attrIndex.setXY(i * 2, i, i + 1);
+			for (let i = 0; i < 4 * (ARC_SEGMENTS3 - 1); i++) {
+				const i1 = (i + 1) % (4 * (ARC_SEGMENTS3 - 1));
+				this._attrIndex.setXY(2 * (ARC_SEGMENTS3 - 1 + i), ARC_SEGMENTS3 + i, ARC_SEGMENTS3 + i1);
+			}
+			this._attrIndex.setXY(2 * (5 * (ARC_SEGMENTS3 - 1)), ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1), 0);
+			this._attrIndex.setXY(2 * (5 * (ARC_SEGMENTS3 - 1) + 1), ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1), ARC_SEGMENTS3 - 1);
+			this._attrIndex.setXY(2 * (5 * (ARC_SEGMENTS3 - 1) + 2), ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1), ARC_SEGMENTS3);
+			this._attrIndex.setXY(2 * (5 * (ARC_SEGMENTS3 - 1) + 3), ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1), ARC_SEGMENTS3 + (ARC_SEGMENTS3 - 1));
+			this._attrIndex.setXY(2 * (5 * (ARC_SEGMENTS3 - 1) + 4), ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1), ARC_SEGMENTS3 + 2 * (ARC_SEGMENTS3 - 1));
+			this._attrIndex.setXY(2 * (5 * (ARC_SEGMENTS3 - 1) + 5), ARC_SEGMENTS3 + 4 * (ARC_SEGMENTS3 - 1), ARC_SEGMENTS3 + 3 * (ARC_SEGMENTS3 - 1));
+			this._attrIndex.needsUpdate = true;
+		}
+	};
+	var _vec3WorldPosition = /* @__PURE__ */ new THREE172.Vector3();
+	var _vec3Scale = /* @__PURE__ */ new THREE172.Vector3();
+	var VRMSpringBoneLimitHelper = class extends THREE172.Group {
+		constructor(limit, joint) {
+			super();
+			this.matrixAutoUpdate = false;
+			this.limit = limit;
+			this.joint = joint;
+			if (this.limit instanceof VRMSpringBoneLimitCone) this._geometry = new LimitConeBufferGeometry(this.limit);
+			else if (this.limit instanceof VRMSpringBoneLimitHinge) this._geometry = new LimitHingeBufferGeometry(this.limit);
+			else if (this.limit instanceof VRMSpringBoneLimitSpherical) this._geometry = new LimitSphericalBufferGeometry(this.limit);
+			else throw new Error("VRMSpringBoneLimitHelper: Unknown limit type detected");
+			const material = new THREE172.LineBasicMaterial({
+				color: 65535,
+				depthTest: false,
+				depthWrite: false
+			});
+			this._line = new THREE172.LineSegments(this._geometry, material);
+			this.add(this._line);
+		}
+		dispose() {
+			this._geometry.dispose();
+		}
+		updateMatrixWorld(force) {
+			this.joint.bone.updateWorldMatrix(true, false);
+			this.joint.bone.getWorldPosition(_vec3WorldPosition);
+			_vec3Scale.setScalar(.5 * this.joint.worldSpaceBoneLength);
+			this.matrix.compose(_vec3WorldPosition, this.limit.internalTotalRotationCache, _vec3Scale);
+			this._geometry.update();
+			super.updateMatrixWorld(force);
+		}
+	};
+	var VRMSpringBoneCollider = class extends THREE182.Object3D {
 		constructor(shape) {
 			super();
-			this.colliderMatrix = new THREE102.Matrix4();
+			this.colliderMatrix = new THREE182.Matrix4();
 			this.shape = shape;
 		}
 		updateWorldMatrix(updateParents, updateChildren) {
@@ -15929,7 +16243,7 @@ function createThreeVrm(__THREE__) {
 			colliderMatrix.elements[14] = me[2] * offset.x + me[6] * offset.y + me[10] * offset.z + me[14];
 		}
 	}
-	var _matA = new THREE112.Matrix4();
+	var _matA = new THREE192.Matrix4();
 	function mat4InvertCompat(target) {
 		if (target.invert) target.invert();
 		else target.getInverse(_matA.copy(target));
@@ -15937,7 +16251,7 @@ function createThreeVrm(__THREE__) {
 	}
 	var Matrix4InverseCache = class {
 		constructor(matrix) {
-			this._inverseCache = new THREE122.Matrix4();
+			this._inverseCache = new THREE202.Matrix4();
 			this._shouldUpdateInverse = true;
 			this.matrix = matrix;
 			const handler = { set: (obj, prop, newVal) => {
@@ -15964,12 +16278,20 @@ function createThreeVrm(__THREE__) {
 			this.matrix.elements = this._originalElements;
 		}
 	};
-	var IDENTITY_MATRIX4 = new THREE132.Matrix4();
-	var _v3A72 = new THREE132.Vector3();
-	var _v3B23 = new THREE132.Vector3();
-	var _worldSpacePosition = new THREE132.Vector3();
-	var _nextTail = new THREE132.Vector3();
-	var _matA2 = new THREE132.Matrix4();
+	var _position2 = new THREE21.Vector3();
+	var _scale2 = new THREE21.Vector3();
+	function getWorldQuaternionLite2(object, out) {
+		object.matrixWorld.decompose(_position2, out, _scale2);
+		return out;
+	}
+	var IDENTITY_MATRIX4 = new THREE222.Matrix4();
+	var _v3A72 = new THREE222.Vector3();
+	var _v3B23 = new THREE222.Vector3();
+	var _worldSpaceInitialRotation = new THREE222.Quaternion();
+	var _worldSpaceInitialMatrix = new THREE222.Matrix4();
+	var _worldSpaceInitialMatrixInv = new THREE222.Matrix4();
+	var _worldSpacePosition = new THREE222.Vector3();
+	var _nextTail = new THREE222.Vector3();
 	var VRMSpringBoneJoint = class {
 		/**
 		* Create a new VRMSpringBone.
@@ -15980,14 +16302,14 @@ function createThreeVrm(__THREE__) {
 		* @param colliderGroups Collider groups that will be collided with this spring bone
 		*/
 		constructor(bone, child, settings = {}, colliderGroups = []) {
-			this._currentTail = new THREE132.Vector3();
-			this._prevTail = new THREE132.Vector3();
-			this._boneAxis = new THREE132.Vector3();
+			this._currentTail = new THREE222.Vector3();
+			this._prevTail = new THREE222.Vector3();
+			this._boneAxis = new THREE222.Vector3();
 			this._worldSpaceBoneLength = 0;
 			this._center = null;
-			this._initialLocalMatrix = new THREE132.Matrix4();
-			this._initialLocalRotation = new THREE132.Quaternion();
-			this._initialLocalChildPosition = new THREE132.Vector3();
+			this._initialLocalMatrix = new THREE222.Matrix4();
+			this._initialLocalRotation = new THREE222.Quaternion();
+			this._initialLocalChildPosition = new THREE222.Vector3();
 			var _a, _b, _c, _d, _e, _f;
 			this.bone = bone;
 			this.bone.matrixAutoUpdate = false;
@@ -15996,10 +16318,21 @@ function createThreeVrm(__THREE__) {
 				hitRadius: (_a = settings.hitRadius) != null ? _a : 0,
 				stiffness: (_b = settings.stiffness) != null ? _b : 1,
 				gravityPower: (_c = settings.gravityPower) != null ? _c : 0,
-				gravityDir: (_e = (_d = settings.gravityDir) == null ? void 0 : _d.clone()) != null ? _e : new THREE132.Vector3(0, -1, 0),
+				gravityDir: (_e = (_d = settings.gravityDir) == null ? void 0 : _d.clone()) != null ? _e : new THREE222.Vector3(0, -1, 0),
 				dragForce: (_f = settings.dragForce) != null ? _f : .4
 			};
+			this.limit = null;
 			this.colliderGroups = colliderGroups;
+		}
+		/**
+		* The length of the bone in world unit.
+		*
+		* It's same as local unit length unless there are scale transformations in the world space.
+		*
+		* Intended to be used by helpers.
+		*/
+		get worldSpaceBoneLength() {
+			return this._worldSpaceBoneLength;
 		}
 		/**
 		* Set of dependencies that need to be updated before this joint.
@@ -16025,6 +16358,11 @@ function createThreeVrm(__THREE__) {
 				if (!this._center.userData.inverseCacheProxy) this._center.userData.inverseCacheProxy = new Matrix4InverseCache(this._center.matrixWorld);
 			}
 		}
+		/**
+		* Initial state of the position of its child.
+		*
+		* Intended to be used by helpers.
+		*/
 		get initialLocalChildPosition() {
 			return this._initialLocalChildPosition;
 		}
@@ -16068,17 +16406,27 @@ function createThreeVrm(__THREE__) {
 		* @param delta deltaTime
 		*/
 		update(delta) {
+			var _a;
 			if (delta <= 0) return;
 			this._calcWorldSpaceBoneLength();
-			const worldSpaceBoneAxis = _v3B23.copy(this._boneAxis).transformDirection(this._initialLocalMatrix).transformDirection(this._parentMatrixWorld);
-			_nextTail.copy(this._currentTail).add(_v3A72.subVectors(this._currentTail, this._prevTail).multiplyScalar(1 - this.settings.dragForce)).applyMatrix4(this._getMatrixCenterToWorld()).addScaledVector(worldSpaceBoneAxis, this.settings.stiffness * delta).addScaledVector(this.settings.gravityDir, this.settings.gravityPower * delta);
+			_worldSpaceInitialMatrix.copy(this._parentMatrixWorld).multiply(this._initialLocalMatrix);
+			_worldSpaceInitialMatrixInv.copy(_worldSpaceInitialMatrix).invert();
 			_worldSpacePosition.setFromMatrixPosition(this.bone.matrixWorld);
-			_nextTail.sub(_worldSpacePosition).normalize().multiplyScalar(this._worldSpaceBoneLength).add(_worldSpacePosition);
+			if (this.limit) {
+				if (this.bone.parent) getWorldQuaternionLite2(this.bone.parent, _worldSpaceInitialRotation);
+				else _worldSpaceInitialRotation.identity();
+				_worldSpaceInitialRotation.multiply(this._initialLocalRotation).normalize();
+				this.limit.internalPrecalcRotation(_worldSpaceInitialRotation, this._boneAxis);
+			}
+			const worldSpaceBoneAxis = _v3B23.copy(this._boneAxis).transformDirection(_worldSpaceInitialMatrix);
+			_nextTail.copy(this._currentTail).add(_v3A72.subVectors(this._currentTail, this._prevTail).multiplyScalar(1 - this.settings.dragForce)).applyMatrix4(this._getMatrixCenterToWorld()).addScaledVector(worldSpaceBoneAxis, this.settings.stiffness * delta).addScaledVector(this.settings.gravityDir, this.settings.gravityPower * delta);
+			_nextTail.sub(_worldSpacePosition).normalize();
+			(_a = this.limit) == null || _a.calculateLimit(_nextTail);
+			_nextTail.multiplyScalar(this._worldSpaceBoneLength).add(_worldSpacePosition);
 			this._collision(_nextTail);
 			this._prevTail.copy(this._currentTail);
 			this._currentTail.copy(_nextTail).applyMatrix4(this._getMatrixWorldToCenter());
-			const worldSpaceInitialMatrixInv = _matA2.multiplyMatrices(this._parentMatrixWorld, this._initialLocalMatrix).invert();
-			this.bone.quaternion.setFromUnitVectors(this._boneAxis, _v3A72.copy(_nextTail).applyMatrix4(worldSpaceInitialMatrixInv).normalize()).premultiply(this._initialLocalRotation);
+			this.bone.quaternion.setFromUnitVectors(this._boneAxis, _v3A72.copy(_nextTail).applyMatrix4(_worldSpaceInitialMatrixInv).normalize()).premultiply(this._initialLocalRotation);
 			this.bone.updateMatrix();
 			this.bone.matrixWorld.multiplyMatrices(this._parentMatrixWorld, this.bone.matrix);
 		}
@@ -16088,14 +16436,15 @@ function createThreeVrm(__THREE__) {
 		* @param tail The tail you want to process
 		*/
 		_collision(tail) {
+			var _a;
 			for (let cg = 0; cg < this.colliderGroups.length; cg++) for (let c = 0; c < this.colliderGroups[cg].colliders.length; c++) {
 				const collider = this.colliderGroups[cg].colliders[c];
 				const dist = collider.shape.calculateCollision(collider.colliderMatrix, tail, this.settings.hitRadius, _v3A72);
 				if (dist < 0) {
 					tail.addScaledVector(_v3A72, -dist);
-					tail.sub(_worldSpacePosition);
-					const length = tail.length();
-					tail.multiplyScalar(this._worldSpaceBoneLength / length).add(_worldSpacePosition);
+					tail.sub(_worldSpacePosition).normalize();
+					(_a = this.limit) == null || _a.calculateLimit(tail);
+					tail.multiplyScalar(this._worldSpaceBoneLength).add(_worldSpacePosition);
 				}
 			}
 		}
@@ -16313,18 +16662,22 @@ function createThreeVrm(__THREE__) {
 		}
 	};
 	var EXTENSION_NAME_EXTENDED_COLLIDER = "VRMC_springBone_extended_collider";
+	var EXTENSION_NAME_LIMIT = "VRMC_springBone_limit";
 	var POSSIBLE_SPEC_VERSIONS8 = /* @__PURE__ */ new Set(["1.0", "1.0-beta"]);
 	var POSSIBLE_SPEC_VERSIONS_EXTENDED_COLLIDERS = /* @__PURE__ */ new Set(["1.0"]);
+	var POSSIBLE_SPEC_VERSIONS_LIMIT = /* @__PURE__ */ new Set(["1.0", "1.0-draft"]);
 	var _VRMSpringBoneLoaderPlugin = class _VRMSpringBoneLoaderPlugin2 {
 		get name() {
 			return _VRMSpringBoneLoaderPlugin2.EXTENSION_NAME;
 		}
 		constructor(parser, options) {
-			var _a;
+			var _a, _b;
 			this.parser = parser;
 			this.jointHelperRoot = options == null ? void 0 : options.jointHelperRoot;
 			this.colliderHelperRoot = options == null ? void 0 : options.colliderHelperRoot;
+			this.limitHelperRoot = options == null ? void 0 : options.limitHelperRoot;
 			this.useExtendedColliders = (_a = options == null ? void 0 : options.useExtendedColliders) != null ? _a : true;
+			this.useLimits = (_b = options == null ? void 0 : options.useLimits) != null ? _b : true;
 		}
 		afterRoot(gltf) {
 			return __async7(this, null, function* () {
@@ -16375,7 +16728,7 @@ function createThreeVrm(__THREE__) {
 						else {
 							const schemaExShape = schemaExCollider.shape;
 							if (schemaExShape.sphere) return this._importSphereCollider(node, {
-								offset: new THREE142.Vector3().fromArray((_b2 = schemaExShape.sphere.offset) != null ? _b2 : [
+								offset: new THREE232.Vector3().fromArray((_b2 = schemaExShape.sphere.offset) != null ? _b2 : [
 									0,
 									0,
 									0
@@ -16384,13 +16737,13 @@ function createThreeVrm(__THREE__) {
 								inside: (_d2 = schemaExShape.sphere.inside) != null ? _d2 : false
 							});
 							else if (schemaExShape.capsule) return this._importCapsuleCollider(node, {
-								offset: new THREE142.Vector3().fromArray((_e2 = schemaExShape.capsule.offset) != null ? _e2 : [
+								offset: new THREE232.Vector3().fromArray((_e2 = schemaExShape.capsule.offset) != null ? _e2 : [
 									0,
 									0,
 									0
 								]),
 								radius: (_f = schemaExShape.capsule.radius) != null ? _f : 0,
-								tail: new THREE142.Vector3().fromArray((_g = schemaExShape.capsule.tail) != null ? _g : [
+								tail: new THREE232.Vector3().fromArray((_g = schemaExShape.capsule.tail) != null ? _g : [
 									0,
 									0,
 									0
@@ -16398,12 +16751,12 @@ function createThreeVrm(__THREE__) {
 								inside: (_h = schemaExShape.capsule.inside) != null ? _h : false
 							});
 							else if (schemaExShape.plane) return this._importPlaneCollider(node, {
-								offset: new THREE142.Vector3().fromArray((_i = schemaExShape.plane.offset) != null ? _i : [
+								offset: new THREE232.Vector3().fromArray((_i = schemaExShape.plane.offset) != null ? _i : [
 									0,
 									0,
 									0
 								]),
-								normal: new THREE142.Vector3().fromArray((_j = schemaExShape.plane.normal) != null ? _j : [
+								normal: new THREE232.Vector3().fromArray((_j = schemaExShape.plane.normal) != null ? _j : [
 									0,
 									0,
 									1
@@ -16412,7 +16765,7 @@ function createThreeVrm(__THREE__) {
 						}
 					}
 					if (schemaShape.sphere) return this._importSphereCollider(node, {
-						offset: new THREE142.Vector3().fromArray((_k = schemaShape.sphere.offset) != null ? _k : [
+						offset: new THREE232.Vector3().fromArray((_k = schemaShape.sphere.offset) != null ? _k : [
 							0,
 							0,
 							0
@@ -16421,13 +16774,13 @@ function createThreeVrm(__THREE__) {
 						inside: false
 					});
 					else if (schemaShape.capsule) return this._importCapsuleCollider(node, {
-						offset: new THREE142.Vector3().fromArray((_m = schemaShape.capsule.offset) != null ? _m : [
+						offset: new THREE232.Vector3().fromArray((_m = schemaShape.capsule.offset) != null ? _m : [
 							0,
 							0,
 							0
 						]),
 						radius: (_n = schemaShape.capsule.radius) != null ? _n : 0,
-						tail: new THREE142.Vector3().fromArray((_o = schemaShape.capsule.tail) != null ? _o : [
+						tail: new THREE232.Vector3().fromArray((_o = schemaShape.capsule.tail) != null ? _o : [
 							0,
 							0,
 							0
@@ -16453,6 +16806,10 @@ function createThreeVrm(__THREE__) {
 				(_e = extension.springs) == null || _e.forEach((schemaSpring, iSpring) => {
 					var _a2;
 					const schemaJoints = schemaSpring.joints;
+					if (schemaJoints == null) {
+						console.warn(`VRMSpringBoneLoaderPlugin: The spring #${iSpring} has no joints. Skipping the spring`);
+						return;
+					}
 					const colliderGroupsForSpring = (_a2 = schemaSpring.colliderGroups) == null ? void 0 : _a2.map((iColliderGroup) => {
 						const group = colliderGroups == null ? void 0 : colliderGroups[iColliderGroup];
 						if (group == null) {
@@ -16474,10 +16831,12 @@ function createThreeVrm(__THREE__) {
 								dragForce: prevSchemaJoint.dragForce,
 								gravityPower: prevSchemaJoint.gravityPower,
 								stiffness: prevSchemaJoint.stiffness,
-								gravityDir: prevSchemaJoint.gravityDir != null ? new THREE142.Vector3().fromArray(prevSchemaJoint.gravityDir) : void 0
+								gravityDir: prevSchemaJoint.gravityDir != null ? new THREE232.Vector3().fromArray(prevSchemaJoint.gravityDir) : void 0
 							};
 							const joint = this._importJoint(node, child, setting, colliderGroupsForSpring);
 							if (center) joint.center = center;
+							const limit = this._tryImportLimitFromSchema(joint, prevSchemaJoint);
+							if (limit) joint.limit = limit;
 							manager.addJoint(joint);
 						}
 						prevSchemaJoint = schemaJoint;
@@ -16508,7 +16867,7 @@ function createThreeVrm(__THREE__) {
 					}
 					return { colliders: ((_a2 = schemaColliderGroup.colliders) != null ? _a2 : []).map((schemaCollider, iCollider) => {
 						var _a3, _b2, _c2;
-						const offset = new THREE142.Vector3(0, 0, 0);
+						const offset = new THREE232.Vector3(0, 0, 0);
 						if (schemaCollider.offset) offset.set((_a3 = schemaCollider.offset.x) != null ? _a3 : 0, (_b2 = schemaCollider.offset.y) != null ? _b2 : 0, schemaCollider.offset.z ? -schemaCollider.offset.z : 0);
 						return this._importSphereCollider(node, {
 							offset,
@@ -16527,7 +16886,7 @@ function createThreeVrm(__THREE__) {
 							console.warn(`VRMSpringBoneLoaderPlugin: The spring bone group #${iBoneGroup} attempted to reference a node #${rootIndex} but not found. Skipping the node`);
 							return;
 						}
-						const gravityDir = new THREE142.Vector3();
+						const gravityDir = new THREE232.Vector3();
 						if (schemaBoneGroup.gravityDir) gravityDir.set((_a2 = schemaBoneGroup.gravityDir.x) != null ? _a2 : 0, (_b2 = schemaBoneGroup.gravityDir.y) != null ? _b2 : 0, (_c2 = schemaBoneGroup.gravityDir.z) != null ? _c2 : 0);
 						else gravityDir.set(0, -1, 0);
 						const center = schemaBoneGroup.center != null ? threeNodes[schemaBoneGroup.center] : void 0;
@@ -16598,6 +16957,78 @@ function createThreeVrm(__THREE__) {
 				helper.renderOrder = this.colliderHelperRoot.renderOrder;
 			}
 			return collider;
+		}
+		_importLimitCone(joint, params) {
+			const limit = new VRMSpringBoneLimitCone(params);
+			if (this.limitHelperRoot) {
+				const helper = new VRMSpringBoneLimitHelper(limit, joint);
+				this.limitHelperRoot.add(helper);
+				helper.renderOrder = this.limitHelperRoot.renderOrder;
+			}
+			return limit;
+		}
+		_importLimitHinge(joint, params) {
+			const limit = new VRMSpringBoneLimitHinge(params);
+			if (this.limitHelperRoot) {
+				const helper = new VRMSpringBoneLimitHelper(limit, joint);
+				this.limitHelperRoot.add(helper);
+				helper.renderOrder = this.limitHelperRoot.renderOrder;
+			}
+			return limit;
+		}
+		_importLimitSpherical(joint, params) {
+			const limit = new VRMSpringBoneLimitSpherical(params);
+			if (this.limitHelperRoot) {
+				const helper = new VRMSpringBoneLimitHelper(limit, joint);
+				this.limitHelperRoot.add(helper);
+				helper.renderOrder = this.limitHelperRoot.renderOrder;
+			}
+			return limit;
+		}
+		_tryImportLimitFromSchema(joint, schemaJoint) {
+			var _a, _b, _c, _d;
+			if (!this.useLimits) return;
+			const schemaLimit = (_a = schemaJoint.extensions) == null ? void 0 : _a[EXTENSION_NAME_LIMIT];
+			if (schemaLimit != null) {
+				const specVersionLimit = schemaLimit.specVersion;
+				if (!POSSIBLE_SPEC_VERSIONS_LIMIT.has(specVersionLimit)) console.warn(`VRMSpringBoneLoaderPlugin: Unknown ${EXTENSION_NAME_LIMIT} specVersion "${specVersionLimit}". Ignoring the limit`);
+				else {
+					if (specVersionLimit === "1.0-draft") console.warn(`VRMSpringBoneLoaderPlugin: Using a draft spec version of ${EXTENSION_NAME_LIMIT}: 1.0-draft. Some behaviors may be different. Consider updating the model file.`);
+					const schemaLimitLimit = schemaLimit.limit;
+					if (schemaLimitLimit.cone) return this._importLimitCone(joint, {
+						angle: schemaLimitLimit.cone.angle,
+						rotation: new THREE232.Quaternion().fromArray((_b = schemaLimitLimit.cone.rotation) != null ? _b : [
+							0,
+							0,
+							0,
+							1
+						])
+					});
+					else if (schemaLimitLimit.hinge) return this._importLimitHinge(joint, {
+						angle: schemaLimitLimit.hinge.angle,
+						rotation: new THREE232.Quaternion().fromArray((_c = schemaLimitLimit.hinge.rotation) != null ? _c : [
+							0,
+							0,
+							0,
+							1
+						])
+					});
+					else if (schemaLimitLimit.spherical) return this._importLimitSpherical(joint, {
+						pitch: schemaLimitLimit.spherical.pitch,
+						yaw: schemaLimitLimit.spherical.yaw,
+						rotation: new THREE232.Quaternion().fromArray((_d = schemaLimitLimit.spherical.rotation) != null ? _d : [
+							0,
+							0,
+							0,
+							1
+						])
+					});
+					else {
+						console.warn("VRMSpringBoneLoaderPlugin: Unknown limit type. Ignoring the limit");
+						return;
+					}
+				}
+			}
 		}
 	};
 	_VRMSpringBoneLoaderPlugin.EXTENSION_NAME = "VRMC_springBone";
@@ -16706,7 +17137,7 @@ function createThreeVrm(__THREE__) {
 				newArray[i * 3 + 2] += src.getZ(i) * weight;
 			}
 		}
-		return new THREE21.BufferAttribute(newArray, 3);
+		return new THREE25.BufferAttribute(newArray, 3);
 	}
 	function combineMorphs(vrm) {
 		var _a;
@@ -16772,14 +17203,14 @@ function createThreeVrm(__THREE__) {
 		if (attribute.getComponent) return attribute.getComponent(index, component);
 		else {
 			let value = attribute.array[index * attribute.itemSize + component];
-			if (attribute.normalized) value = THREE25.MathUtils.denormalize(value, attribute.array);
+			if (attribute.normalized) value = THREE26.MathUtils.denormalize(value, attribute.array);
 			return value;
 		}
 	}
 	function attributeSetComponentCompat(attribute, index, component, value) {
 		if (attribute.setComponent) attribute.setComponent(index, component, value);
 		else {
-			if (attribute.normalized) value = THREE26.MathUtils.normalize(value, attribute.array);
+			if (attribute.normalized) value = THREE27.MathUtils.normalize(value, attribute.array);
 			attribute.array[index * attribute.itemSize + component] = value;
 		}
 	}
@@ -16827,7 +17258,7 @@ function createThreeVrm(__THREE__) {
 			const { boneInverseMap, meshes } = group;
 			const newBones = Array.from(boneInverseMap.keys());
 			const newBoneInverses = Array.from(boneInverseMap.values());
-			const newSkeleton = new THREE27.Skeleton(newBones, newBoneInverses);
+			const newSkeleton = new THREE28.Skeleton(newBones, newBoneInverses);
 			const skeletonKey = skeletonDispatcher.getOrCreate(newSkeleton);
 			for (const mesh of meshes) {
 				const skinIndexAttr = mesh.geometry.getAttribute("skinIndex");
@@ -16842,7 +17273,7 @@ function createThreeVrm(__THREE__) {
 				}
 				mesh.geometry.setAttribute("skinIndex", newSkinIndexAttr);
 			}
-			for (const mesh of meshes) mesh.bind(newSkeleton, new THREE27.Matrix4());
+			for (const mesh of meshes) mesh.bind(newSkeleton, new THREE28.Matrix4());
 		}
 	}
 	function collectSkinnedMeshes(scene) {
@@ -16924,7 +17355,7 @@ function createThreeVrm(__THREE__) {
 	};
 	function shallowCloneBufferGeometry(geometry) {
 		var _a, _b, _c, _d;
-		const clone = new THREE27.BufferGeometry();
+		const clone = new THREE28.BufferGeometry();
 		clone.name = geometry.name;
 		clone.setIndex(geometry.index);
 		for (const [name, attribute] of Object.entries(geometry.attributes)) clone.setAttribute(name, attribute);
@@ -17010,8 +17441,8 @@ function createThreeVrm(__THREE__) {
 				bones.push(mesh.skeleton.bones[oldIndex]);
 				boneInverses.push(mesh.skeleton.boneInverses[oldIndex]);
 			}
-			const skeleton = new THREE28.Skeleton(bones, boneInverses);
-			mesh.bind(skeleton, new THREE28.Matrix4());
+			const skeleton = new THREE29.Skeleton(bones, boneInverses);
+			mesh.bind(skeleton, new THREE29.Matrix4());
 		}
 	}
 	function checkIsVertexUsed(attributes, originalIndex) {
@@ -17065,7 +17496,7 @@ function createThreeVrm(__THREE__) {
 			const index = originalIndexArray[i];
 			newIndexArray[i] = originalIndexNewIndexMap[index];
 		}
-		newGeometry.setIndex(new BufferAttribute9(newIndexArray, originalIndex.itemSize, originalIndex.normalized));
+		newGeometry.setIndex(new BufferAttribute12(newIndexArray, originalIndex.itemSize, originalIndex.normalized));
 	}
 	function remapAttributeArray(originalArray, newIndexOriginalIndexMap, stride) {
 		const ArrayCtor = originalArray.constructor;
@@ -17104,11 +17535,11 @@ function createThreeVrm(__THREE__) {
 			const originalInterleavedBufferArray = interleavedBuffer.array;
 			const { stride } = interleavedBuffer;
 			const [newInterleavedArray, _] = remapAttributeArray(originalInterleavedBufferArray, newIndexOriginalIndexMap, stride);
-			const newInterleavedBuffer = new THREE29.InterleavedBuffer(newInterleavedArray, stride);
+			const newInterleavedBuffer = new THREE30.InterleavedBuffer(newInterleavedArray, stride);
 			newInterleavedBuffer.setUsage(interleavedBuffer.usage);
 			for (const [attributeName, originalAttribute] of attributesInGroup) {
 				const { itemSize, offset, normalized } = originalAttribute;
-				const newAttribute = new THREE29.InterleavedBufferAttribute(newInterleavedBuffer, itemSize, offset, normalized);
+				const newAttribute = new THREE30.InterleavedBufferAttribute(newInterleavedBuffer, itemSize, offset, normalized);
 				newGeometry.setAttribute(attributeName, newAttribute);
 			}
 		}
@@ -17116,7 +17547,7 @@ function createThreeVrm(__THREE__) {
 			const originalAttributeArray = originalAttribute.array;
 			const { itemSize, normalized } = originalAttribute;
 			const [newAttributeArray, _] = remapAttributeArray(originalAttributeArray, newIndexOriginalIndexMap, itemSize);
-			newGeometry.setAttribute(attributeName, new BufferAttribute9(newAttributeArray, itemSize, normalized));
+			newGeometry.setAttribute(attributeName, new BufferAttribute12(newAttributeArray, itemSize, normalized));
 		}
 	}
 	function collectMorphAttributeGroups(morphAttributes) {
@@ -17158,11 +17589,11 @@ function createThreeVrm(__THREE__) {
 			const { stride } = interleavedBuffer;
 			const [newInterleavedArray, isAllZero] = remapAttributeArray(originalInterleavedBufferArray, newIndexOriginalIndexMap, stride);
 			allMorphsAreZero = allMorphsAreZero && isAllZero;
-			const newInterleavedBuffer = new THREE29.InterleavedBuffer(newInterleavedArray, stride);
+			const newInterleavedBuffer = new THREE30.InterleavedBuffer(newInterleavedArray, stride);
 			newInterleavedBuffer.setUsage(interleavedBuffer.usage);
 			for (const [attributeName, morphIndex, attribute] of attributesInGroup) {
 				const { itemSize, offset, normalized } = attribute;
-				const newAttribute = new THREE29.InterleavedBufferAttribute(newInterleavedBuffer, itemSize, offset, normalized);
+				const newAttribute = new THREE30.InterleavedBufferAttribute(newInterleavedBuffer, itemSize, offset, normalized);
 				newMorphAttributes[attributeName] ?? (newMorphAttributes[attributeName] = []);
 				newMorphAttributes[attributeName][morphIndex] = newAttribute;
 			}
@@ -17174,7 +17605,7 @@ function createThreeVrm(__THREE__) {
 			const [newAttributeArray, isAllZero] = remapAttributeArray(originalAttributeArray, newIndexOriginalIndexMap, itemSize);
 			allMorphsAreZero = allMorphsAreZero && isAllZero;
 			newMorphAttributes[attributeName] ?? (newMorphAttributes[attributeName] = []);
-			newMorphAttributes[attributeName][morphIndex] = new BufferAttribute9(newAttributeArray, itemSize, normalized);
+			newMorphAttributes[attributeName][morphIndex] = new BufferAttribute12(newAttributeArray, itemSize, normalized);
 		}
 		newGeometry.morphAttributes = allMorphsAreZero ? {} : newMorphAttributes;
 	}
@@ -17194,7 +17625,7 @@ function createThreeVrm(__THREE__) {
 			const { isVertexUsed, vertexCount, verticesUsed } = checkIsVertexUsed(geometry.attributes, originalIndex);
 			if (verticesUsed === vertexCount) return;
 			const { originalIndexNewIndexMap, newIndexOriginalIndexMap } = buildIndexMapsFromIsVertexUsed(isVertexUsed);
-			const newGeometry = new THREE29.BufferGeometry();
+			const newGeometry = new THREE30.BufferGeometry();
 			copyGeometryProperties(geometry, newGeometry);
 			geometryMap.set(geometry, newGeometry);
 			reorganizeIndexAttribute(newGeometry, originalIndex, originalIndexNewIndexMap);
@@ -17220,7 +17651,7 @@ function createThreeVrm(__THREE__) {
 	VRMUtils.removeUnnecessaryVertices = removeUnnecessaryVertices;
 	VRMUtils.rotateVRM0 = rotateVRM0;
 	/*!
-	* @pixiv/three-vrm-core v3.5.5
+	* @pixiv/three-vrm-core v3.6.0
 	* The implementation of core features of VRM, for @pixiv/three-vrm
 	*
 	* Copyright (c) 2019-2026 pixiv Inc.
@@ -17228,7 +17659,7 @@ function createThreeVrm(__THREE__) {
 	* https://github.com/pixiv/three-vrm/blob/release/LICENSE
 	*/
 	/*!
-	* @pixiv/three-vrm-materials-mtoon v3.5.5
+	* @pixiv/three-vrm-materials-mtoon v3.6.0
 	* MToon (toon material) module for @pixiv/three-vrm
 	*
 	* Copyright (c) 2019-2026 pixiv Inc.
@@ -17236,7 +17667,7 @@ function createThreeVrm(__THREE__) {
 	* https://github.com/pixiv/three-vrm/blob/release/LICENSE
 	*/
 	/*!
-	* @pixiv/three-vrm-materials-hdr-emissive-multiplier v3.5.5
+	* @pixiv/three-vrm-materials-hdr-emissive-multiplier v3.6.0
 	* Support VRMC_hdr_emissiveMultiplier for @pixiv/three-vrm
 	*
 	* Copyright (c) 2019-2026 pixiv Inc.
@@ -17244,7 +17675,7 @@ function createThreeVrm(__THREE__) {
 	* https://github.com/pixiv/three-vrm/blob/release/LICENSE
 	*/
 	/*!
-	* @pixiv/three-vrm-materials-v0compat v3.5.5
+	* @pixiv/three-vrm-materials-v0compat v3.6.0
 	* VRM0.0 materials compatibility layer plugin for @pixiv/three-vrm
 	*
 	* Copyright (c) 2019-2026 pixiv Inc.
@@ -17252,7 +17683,7 @@ function createThreeVrm(__THREE__) {
 	* https://github.com/pixiv/three-vrm/blob/release/LICENSE
 	*/
 	/*!
-	* @pixiv/three-vrm-node-constraint v3.5.5
+	* @pixiv/three-vrm-node-constraint v3.6.0
 	* Node constraint module for @pixiv/three-vrm
 	*
 	* Copyright (c) 2019-2026 pixiv Inc.
@@ -17260,7 +17691,7 @@ function createThreeVrm(__THREE__) {
 	* https://github.com/pixiv/three-vrm/blob/release/LICENSE
 	*/
 	/*!
-	* @pixiv/three-vrm-springbone v3.5.5
+	* @pixiv/three-vrm-springbone v3.6.0
 	* Spring bone module for @pixiv/three-vrm
 	*
 	* Copyright (c) 2019-2026 pixiv Inc.
@@ -17318,6 +17749,11 @@ function createThreeVrm(__THREE__) {
 		VRMSpringBoneColliderShapeSphere,
 		VRMSpringBoneJoint,
 		VRMSpringBoneJointHelper,
+		VRMSpringBoneLimit,
+		VRMSpringBoneLimitCone,
+		VRMSpringBoneLimitHelper,
+		VRMSpringBoneLimitHinge,
+		VRMSpringBoneLimitSpherical,
 		VRMSpringBoneLoaderPlugin,
 		VRMSpringBoneManager,
 		VRMUtils
